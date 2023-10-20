@@ -2,7 +2,6 @@ package com.sparta.team2project.users;
 
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.profile.dto.PasswordRequestDto;
-import com.sparta.team2project.profile.dto.ProfileImgRequestDto;
 import com.sparta.team2project.profile.dto.ProfileNickNameRequestDto;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -68,9 +67,9 @@ public class Users {
         }
     }
     // 프로필 정보 업데이트 (프로필이미지)
-    public void updateProfileImg(ProfileImgRequestDto requestDto) {
-        if (requestDto.getUpdateProfileImg() != null) {
-            this.profileImg = requestDto.getUpdateProfileImg();
+    public void updateProfileImg(String picturesURL) {
+        if (picturesURL!= null) {
+            this.profileImg = picturesURL;
         }
     }
 

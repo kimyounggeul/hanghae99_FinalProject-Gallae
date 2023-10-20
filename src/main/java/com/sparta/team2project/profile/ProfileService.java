@@ -1,17 +1,27 @@
 package com.sparta.team2project.profile;
 
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
+import com.sparta.team2project.pictures.dto.PicturesResponseDto;
+import com.sparta.team2project.pictures.entity.Pictures;
+import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.profile.dto.*;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +29,11 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
+    private final AmazonS3Client amazonS3Client;
+    private final PicturesRepository picturesRepository;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     // 마이페이지 조회하기
     public ResponseEntity<ProfileResponseDto> getProfile(Users users) {
@@ -49,18 +64,38 @@ public class ProfileService {
 
     // 마이페이지 수정하기(프로필이미지)
     @Transactional
-    public ResponseEntity<MessageResponseDto> updateProfileImg(ProfileImgRequestDto requestDto, Users users) {
+    public ProfileImgResponseDto updateProfileImg(MultipartFile file, Users users) {
+        // 1. 권한 확인
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users); //권한 확인
-        Profile findProfile = checkProfile(users); // 마이페이지 찾기
-
-
+        Profile findProfile = checkProfile(users); // 프로필 확인
+        // 2. 파일 정보 추출
+        String picturesName = file.getOriginalFilename();
+        String picturesURL = "https://" + bucket + "/" + picturesName;
+        String pictureContentType = file.getContentType();
+        Long pictureSize = file.getSize();  // 단위: KBytes
+        // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(file.getContentType());
+        metadata.setContentLength(file.getSize());
+        try {
+            amazonS3Client.putObject(bucket, picturesName, file.getInputStream(), metadata);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         //프로필이미지 업데이트
-        findProfile.getUsers().updateProfileImg(requestDto);
+        findProfile.getUsers().updateProfileImg(picturesURL);
         profileRepository.save(findProfile);
-
         MessageResponseDto responseDto = new MessageResponseDto("마이페이지 수정 성공", 200);
-        return ResponseEntity.ok(responseDto);
+        ProfileImgResponseDto profileImgResponseDto = new ProfileImgResponseDto(
+                responseDto,
+                picturesName,
+                picturesURL,
+                pictureContentType,
+                pictureSize
+                );
+
+        return profileImgResponseDto;
     }
 
     // 비밀번호 수정하기

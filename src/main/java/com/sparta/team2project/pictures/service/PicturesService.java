@@ -16,15 +16,24 @@ import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.s3.AmazonS3ResourceStorage;
 import com.sparta.team2project.s3.FileDetail;
+import com.sparta.team2project.s3.MultipartUtil;
 import com.sparta.team2project.schedules.entity.Schedules;
 import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
+import jakarta.persistence.Convert;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import marvin.image.MarvinImage;
+import org.marvinproject.image.transform.scale.Scale;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +57,7 @@ public class PicturesService {
     }
 
     // 사진 등록
+    @SneakyThrows
     public UploadResponseDto uploadPictures(Long schedulesId, List<MultipartFile> files, Users users) {
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users);         // 권한 확인
@@ -62,6 +72,7 @@ public class PicturesService {
             String picturesName = file.getOriginalFilename();
             String picturesURL = "https://" + bucket + "/" + picturesName;
             String pictureContentType = file.getContentType();
+            String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             Long pictureSize = file.getSize();  // 단위: KBytes
             PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
                     schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
@@ -72,15 +83,12 @@ public class PicturesService {
             );
             Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
             checkPicturesList.add(pictures);
+            // MultipartFile -> BufferedImage Convert
+            BufferedImage resizedImage = resizeImage(picturesName, fileFormatName, file, 250, 250);
             // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentType(file.getContentType());
             metadata.setContentLength(file.getSize());
-            try {
-                amazonS3Client.putObject(bucket, picturesName, file.getInputStream(), metadata);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         // 4. Repository에 Pictures리스트를 저장
@@ -205,6 +213,31 @@ public class PicturesService {
         picturesRepository.delete(pictures);
         MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 삭제되었습니다.", 200);
         return messageResponseDto;
+    }
+
+    // 이미지 사이즈 변경 메서드
+    BufferedImage resizeImage(String fileName, String fileFormatName, MultipartFile originalImage, int targetWidth, int targetHeight) {
+        try{
+            // MultipartFile -> BufferedImage Convert
+            BufferedImage image = ImageIO.read(originalImage.getInputStream());
+            // newWidth : newHeight = originWidth : originHeight
+            int originWidth = image.getWidth();
+            int originHeight = image.getHeight();
+
+            MarvinImage imageMarvin = new MarvinImage(image);
+            Scale scale = new Scale();
+            scale.load();
+            scale.setAttribute("newWidth", targetWidth);
+            scale.setAttribute("newHeight", targetWidth * originHeight / originWidth);
+            scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
+
+            BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
+            return imageNoAlpha;
+
+
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);
+        }
     }
 
     // 사용자 조회 메서드
