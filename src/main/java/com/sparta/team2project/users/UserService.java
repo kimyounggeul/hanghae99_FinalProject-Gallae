@@ -161,10 +161,10 @@ public class UserService {
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비번이 맞는지 확인
         }
         String accessToken = jwtUtil.createToken(users.getEmail(), users.getUserRole()); // 토큰 생성
-//        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole()); // 토큰 생성
+        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole()); // 토큰 생성
 
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken); // 생성된 토큰 헤더에 넣기
-//        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken); // 생성된 토큰 헤더에 넣기
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken); // 생성된 토큰 헤더에 넣기
 
 
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpServletResponse.SC_OK));

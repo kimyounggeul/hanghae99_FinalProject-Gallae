@@ -43,6 +43,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            // 액세스 토큰 만료
+            if (jwtUtil.isRefreshToken(tokenValue)) {
+                // 리프레시 토큰인 경우, 액세스 토큰을 재발급
+                String newAccessToken = jwtUtil.reissueAccessToken(tokenValue);
+
+                if (newAccessToken != null) {
+                    // 새로운 액세스 토큰을 응답 헤더에 설정
+                    res.setHeader("Authorization", newAccessToken);
+                } else {
+                    log.error("Failed to reissue access token.");
+                    return;
+                }
+            }
+
             Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
 
             try {
