@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 public abstract class TimeStamped {
     @CreatedDate
-    @Column(updatable = false)
+    @Column(updatable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createdAt;
 
@@ -22,5 +22,9 @@ public abstract class TimeStamped {
     @Column
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime modifiedAt;
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
 

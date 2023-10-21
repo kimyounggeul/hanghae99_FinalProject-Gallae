@@ -30,7 +30,7 @@ public class PostResponseDto {
     private Integer commentNum;
     private LocalDateTime modifiedAt;
     private List<Long> tripDateIdList;
-    private List<String> subTitleList;
+    private String subTitle;
     private List<String> chosenDateList;
 
      // 전체 게시글 관련 반환시
@@ -79,11 +79,11 @@ public class PostResponseDto {
         this.nickName = users.getNickName();
         this.likeNum = posts.getLikeNum();
         this.viewNum =  posts.getViewNum();
+        this.subTitle = posts.getSubTitle();
         this.commentNum = commentNum;
         this.postCategory = posts.getPostCategory();
-        this.createdAt = posts.getCreatedAt();
+        this.createdAt = posts.getCreatedAt(); // 이게 굳이 필요한가??
         this.tripDateIdList = tripDateList.stream().map(TripDate::getId).toList();
-        this.subTitleList = tripDateList.stream().map(TripDate::getSubTitle).toList();
         this.chosenDateList = tripDateList.stream().map(TripDate::getChosenDate).map(LocalDate::toString).toList();
     }
 }

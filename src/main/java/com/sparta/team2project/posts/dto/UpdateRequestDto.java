@@ -9,6 +9,7 @@ import java.util.List;
 public class UpdateRequestDto {
     private String title;
     private String contents;
+    private String subTitle;
     private PostCategory postCategory;
     private List<String> tagsList;
 }

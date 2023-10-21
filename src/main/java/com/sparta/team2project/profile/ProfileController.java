@@ -38,9 +38,17 @@ public class ProfileController {
     // 프로필 수정하기(프로필이미지)
     @Operation(summary = "마이 페이지 프로필 수정(프로필사진)", description = "마이 페이지 (프로필사진)프로필 수정 api 입니다.")
     @PutMapping("/update-profileImg")
-    public ProfileImgResponseDto updateProfileImg(@RequestParam("file")MultipartFile file,
+    public String updateProfileImg(@RequestParam("file")MultipartFile file,
                                                        @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return profileService.updateProfileImg(file, userDetails.getUsers());
+    }
+
+    // 프로필 사진 조회
+    @Operation(summary = "마이 페이지 프로필 사진 조회", description = "마이 페이지 프로필 사진 조회 api 입니다.")
+    @GetMapping("/users-profileImg/{userId}")
+    public String readProfileImg(@PathVariable("userId") Long userId,
+                                                  @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return profileService.readProfileImg(userId, userDetails.getUsers());
     }
 
     //프로필 수정하기(비밀번호)

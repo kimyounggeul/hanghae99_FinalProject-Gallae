@@ -10,8 +10,7 @@ public class TotalRequestDto {
     private String title;
     private String contents;
     private PostCategory postCategory;
+    private String  subTitle;
     private List<String> tagsList;
-//    private LocalDate startDate;
-//    private LocalDate endDate;
-    private List<TripDateRequestDto> tripDateList;
+    private List<TripDateOnlyRequestDto> tripDateList;
 }

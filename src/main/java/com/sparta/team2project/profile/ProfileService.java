@@ -1,7 +1,9 @@
 package com.sparta.team2project.profile;
 
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
@@ -11,9 +13,12 @@ import com.sparta.team2project.pictures.dto.PicturesResponseDto;
 import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.profile.dto.*;
+import com.sparta.team2project.s3.CustomMultipartFile;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import lombok.RequiredArgsConstructor;
+import marvin.image.MarvinImage;
+import org.marvinproject.image.transform.scale.Scale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,7 +26,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +74,7 @@ public class ProfileService {
 
     // 마이페이지 수정하기(프로필이미지)
     @Transactional
-    public ProfileImgResponseDto updateProfileImg(MultipartFile file, Users users) {
+    public String updateProfileImg(MultipartFile file, Users users) {
         // 1. 권한 확인
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users); //권한 확인
@@ -73,15 +83,19 @@ public class ProfileService {
         String picturesName = file.getOriginalFilename();
         String picturesURL = "https://" + bucket + "/" + picturesName;
         String pictureContentType = file.getContentType();
-        Long pictureSize = file.getSize();  // 단위: KBytes
-        // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
+        String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+        // 3. 이미지 사이즈 재조정
+        MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+        Long pictureSize = resizedImage.getSize();  // 단위: KBytes
+        // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(file.getContentType());
-        metadata.setContentLength(file.getSize());
-        try {
-            amazonS3Client.putObject(bucket, picturesName, file.getInputStream(), metadata);
+        metadata.setContentType(resizedImage.getContentType());
+        metadata.setContentLength(resizedImage.getSize());
+        try (InputStream inputStream = resizedImage.getInputStream()) {
+            amazonS3Client.putObject(new PutObjectRequest(bucket, picturesName, inputStream, metadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
         }
         //프로필이미지 업데이트
         findProfile.getUsers().updateProfileImg(picturesURL);
@@ -95,7 +109,47 @@ public class ProfileService {
                 pictureSize
                 );
 
-        return profileImgResponseDto;
+        return picturesURL;
+    }
+
+    public String readProfileImg(Long userId, Users users) {
+        String filename = users.getProfileImg().substring(users.getProfileImg().lastIndexOf("/") + 1);
+        URL url = amazonS3Client.getUrl(bucket, filename);
+        String urlText = "" + url;
+        return urlText;
+    }
+
+    @Transactional
+    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+
+        try {
+            BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
+
+            int originWidth = image.getWidth();
+            int originHeight = image.getHeight();
+
+            // origin 이미지가 400보다 작으면 패스
+            if(originWidth < width)
+                return originalImage;
+
+            MarvinImage imageMarvin = new MarvinImage(image);
+
+            Scale scale = new Scale();
+            scale.load();
+            scale.setAttribute("newWidth", width);
+            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
+            scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
+
+            BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(imageNoAlpha, fileFormat, baos);
+            baos.flush();
+
+            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
+
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);
+        }
     }
 
     // 비밀번호 수정하기
@@ -158,6 +212,7 @@ public class ProfileService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PROFILE_NOT_EXIST));
 
     }
+
 
 
 }

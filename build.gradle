@@ -28,6 +28,7 @@ dependencies {
 	testImplementation 'org.springframework:spring-test:6.0.13'
 	implementation 'org.springframework:spring-web:6.0.13'
 
+
 	// 소셜로그인
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 

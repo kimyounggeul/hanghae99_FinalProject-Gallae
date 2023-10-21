@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "posts")
 @Getter
@@ -29,6 +31,9 @@ public class Posts extends TimeStamped {
     @Column(nullable = true,length = 500)
     private String contents;
 
+    @Column(nullable = true)
+    private String subTitle;
+
     @Column(nullable = false)
     @Enumerated(value = EnumType.STRING)
     private PostCategory postCategory;
@@ -38,10 +43,11 @@ public class Posts extends TimeStamped {
     private Users users;
 
 
-    public Posts(String contents, String title, PostCategory postCategory,Users users) {
+    public Posts(String contents, String title, PostCategory postCategory,String subTitle,Users users) {
         this.contents = contents;
         this.title = title;
         this.postCategory = postCategory;
+        this.subTitle =subTitle;
         this.users = users;
     }
 
@@ -59,5 +65,12 @@ public class Posts extends TimeStamped {
         this.postCategory = updateRequestDto.getPostCategory();
         this.title =  updateRequestDto.getTitle();
         this.contents = updateRequestDto.getContents();
+        this.subTitle =updateRequestDto.getSubTitle();
+    }
+
+    public void updateTime(UpdateRequestDto updateRequestDto, LocalDateTime postTime) {
+        this.title =  updateRequestDto.getTitle();
+        this.contents = updateRequestDto.getContents();
+        this.setCreatedAt(postTime);
     }
 }

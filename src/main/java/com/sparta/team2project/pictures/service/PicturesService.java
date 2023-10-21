@@ -2,9 +2,7 @@ package com.sparta.team2project.pictures.service;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.*;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
@@ -15,6 +13,7 @@ import com.sparta.team2project.pictures.dto.UploadResponseDto;
 import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.s3.AmazonS3ResourceStorage;
+import com.sparta.team2project.s3.CustomMultipartFile;
 import com.sparta.team2project.s3.FileDetail;
 import com.sparta.team2project.s3.MultipartUtil;
 import com.sparta.team2project.schedules.entity.Schedules;
@@ -29,6 +28,7 @@ import org.marvinproject.image.transform.scale.Scale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -73,22 +73,28 @@ public class PicturesService {
             String picturesURL = "https://" + bucket + "/" + picturesName;
             String pictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
-            Long pictureSize = file.getSize();  // 단위: KBytes
+            // 2. 이미지 리사이즈 함수 호출
+            MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+            Long pictureSize = resizedImage.getSize();  // 단위: KBytes
             PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
                     schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
             picturesResponseDtoList.add(picturesResponseDto);
-            // 2. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
+            // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
             Schedules schedules = schedulesRepository.findById(schedulesId).orElseThrow(
                     () -> new CustomException(ErrorCode.ID_NOT_MATCH)
             );
             Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
             checkPicturesList.add(pictures);
-            // MultipartFile -> BufferedImage Convert
-            BufferedImage resizedImage = resizeImage(picturesName, fileFormatName, file, 250, 250);
-            // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
+            // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(file.getContentType());
-            metadata.setContentLength(file.getSize());
+            metadata.setContentType(resizedImage.getContentType());
+            metadata.setContentLength(resizedImage.getSize());
+            try (InputStream inputStream = resizedImage.getInputStream()) {
+                amazonS3Client.putObject(new PutObjectRequest(bucket, picturesName, inputStream, metadata)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
+            }
         }
 
         // 4. Repository에 Pictures리스트를 저장
@@ -176,22 +182,27 @@ public class PicturesService {
         }
         // 아닐 경우 요청된 사진 입력
         else{
+            // 1. 파일 기본 정보 추출
             String picturesName = file.getOriginalFilename();
             String picturesURL = "https://" + bucket + "/" + picturesName;
             String pictureContentType = file.getContentType();
-            Long pictureSize = file.getSize();  // 단위: KBytes
+            String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+            // 2. 이미지 사이즈 재조정
+            MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+            Long pictureSize = resizedImage.getSize();  // 단위: KBytes
             PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
                     schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
             Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
             picturesRepository.save(pictures);
             // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(file.getContentType());
-            metadata.setContentLength(file.getSize());
-            try {
-                amazonS3Client.putObject(bucket, picturesName, file.getInputStream(), metadata);
+            metadata.setContentType(resizedImage.getContentType());
+            metadata.setContentLength(resizedImage.getSize());
+            try (InputStream inputStream = resizedImage.getInputStream()) {
+                amazonS3Client.putObject(new PutObjectRequest(bucket, picturesName, inputStream, metadata)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
             }
             MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
             PicturesMessageResponseDto picturesMessageResponseDto = new PicturesMessageResponseDto(picturesResponseDto, messageResponseDto);
@@ -216,24 +227,33 @@ public class PicturesService {
     }
 
     // 이미지 사이즈 변경 메서드
-    BufferedImage resizeImage(String fileName, String fileFormatName, MultipartFile originalImage, int targetWidth, int targetHeight) {
-        try{
-            // MultipartFile -> BufferedImage Convert
-            BufferedImage image = ImageIO.read(originalImage.getInputStream());
-            // newWidth : newHeight = originWidth : originHeight
+    @Transactional
+    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+
+        try {
+            BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
+
             int originWidth = image.getWidth();
             int originHeight = image.getHeight();
 
+            // origin 이미지가 400보다 작으면 패스
+            if(originWidth < width)
+                return originalImage;
+
             MarvinImage imageMarvin = new MarvinImage(image);
+
             Scale scale = new Scale();
             scale.load();
-            scale.setAttribute("newWidth", targetWidth);
-            scale.setAttribute("newHeight", targetWidth * originHeight / originWidth);
+            scale.setAttribute("newWidth", width);
+            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
             scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
 
             BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
-            return imageNoAlpha;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(imageNoAlpha, fileFormat, baos);
+            baos.flush();
 
+            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
 
         } catch (IOException e) {
             throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);

@@ -7,5 +7,5 @@ import java.time.LocalDate;
 @Getter
 public class TripDateOnlyRequestDto {
     private LocalDate chosenDate;
-    private String subTitle;
+
 }
