@@ -11,7 +11,6 @@ import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.postslike.entity.PostsLike;
 import com.sparta.team2project.postslike.repository.PostsLikeRepository;
-import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.tags.entity.Tags;
 import com.sparta.team2project.tags.repository.TagsRepository;
 import com.sparta.team2project.tripdate.entity.TripDate;
@@ -96,6 +95,7 @@ public class PostsService {
         List<Posts> postsList = postsRepository.findByUsersOrderByCreatedAtDesc(existUser);
 
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
+
         for (Posts posts : postsList) {
 
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
@@ -103,7 +103,8 @@ public class PostsService {
             List<Tags> tags = tagsRepository.findByPosts(posts);
             List<TripDate> tripDateList = tripDateRepository.findByPosts(posts);
 
-            postResponseDtoList.add(new PostResponseDto(posts,tags,posts.getUsers(),commentNum,tripDateList));
+            postResponseDtoList.add(new PostResponseDto(posts, tags, posts.getUsers(), commentNum, tripDateList));
+
         }
         return postResponseDtoList;
     }
@@ -141,19 +142,25 @@ public class PostsService {
     }
 
     // 사용자가 좋아요 누른 게시물 조회
-    public List<PostResponseDto> getUserLikePosts(Users users) {
+    public Page<PostResponseDto> getUserLikePosts(Users users,int page,int size) {
 
+        Pageable pageable = PageRequest.of(page,size);
         Users existUser = checkUser(users); // 사용자 조회
-        List<PostsLike> userLikePosts = postsLikeRepository.findByUsers(existUser);
+        Page<PostsLike> userLikePosts = postsLikeRepository.findByUsersOrderByPostsDesc(existUser,pageable);
+
 
         List<Posts> postsList = new ArrayList<>();
         userLikePosts.stream()
                 .map(PostsLike::getPosts)
                 .forEach(postsList::add);
 
-        postsList.sort(Comparator.comparing(Posts::getCreatedAt).reversed());
-
-        return getLikePostResponse(postsList);
+        List<PostResponseDto> postResponseDtoList = new ArrayList<>();
+        for(Posts posts:postsList){
+            if (posts.getContents() != null && posts.getTitle() != null) {
+                postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
+            }
+        }
+        return new PageImpl<>(postResponseDtoList, pageable, userLikePosts.getTotalElements());
     }
 
     // 게시글 좋아요 및 좋아요 취소
@@ -241,22 +248,11 @@ public class PostsService {
     private List<PostResponseDto> getPostResponseDto(List<Posts> postsList) {
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
         for(Posts posts:postsList){
-
-            int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
-
-            List<Tags> tag = tagsRepository.findByPosts(posts);
-
-            postResponseDtoList.add(new PostResponseDto(posts,tag,posts.getUsers(),commentNum));
-        }
-        return postResponseDtoList;
-    }
-
-    // 사용자가 누른 게시글들 관련 반환 시 사용 메서드
-    private List<PostResponseDto> getLikePostResponse(List<Posts> postsList) {
-        List<PostResponseDto> postResponseDtoList = new ArrayList<>();
-        for(Posts posts:postsList){
-
-            postResponseDtoList.add(new PostResponseDto(posts,posts.getUsers()));
+            if (posts.getContents() != null && posts.getTitle() != null) {
+                int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
+                List<Tags> tag = tagsRepository.findByPosts(posts);
+                postResponseDtoList.add(new PostResponseDto(posts, tag, posts.getUsers(), commentNum));
+            }
         }
         return postResponseDtoList;
     }

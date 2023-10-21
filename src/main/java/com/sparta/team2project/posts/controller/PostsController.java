@@ -14,6 +14,7 @@ import com.sparta.team2project.posts.service.PostsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,7 @@ public class PostsController {
     public ResponseEntity<PostMessageResponseDto> createPost(@RequestBody TotalRequestDto totalRequestDto, @AuthenticationPrincipal UserDetailsImpl userDetails){
         return ResponseEntity.ok(postsService.createPost(totalRequestDto,userDetails.getUsers()));
     }
-  
+
     // 단일 게시물 조회
     @Operation(summary = "게시글 상세 조회 ", description = "게시글 상세 조회 api 입니다.")
     @GetMapping("/posts/{postId}")
@@ -69,7 +70,7 @@ public class PostsController {
     // 사용자가 좋아요 누른 게시글 조회
     @Operation(summary = " 사용자가 좋아요 한 게시글 조회 ", description = "사용자가 좋아요 한 게시글 조회 api 입니다.")
     @GetMapping("/posts/like")
-    public ResponseEntity<List<PostResponseDto>> getUserLikePosts(@AuthenticationPrincipal UserDetailsImpl userDetails){return ResponseEntity.ok(postsService.getUserLikePosts(userDetails.getUsers()));}
+    public ResponseEntity<Page<PostResponseDto>> getUserLikePosts(@RequestParam int page, @RequestParam int size,@AuthenticationPrincipal UserDetailsImpl userDetails){return ResponseEntity.ok(postsService.getUserLikePosts(userDetails.getUsers(),page,size));}
 
 
     // 좋아요 기능
