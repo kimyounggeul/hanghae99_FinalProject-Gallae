@@ -2,6 +2,7 @@ package com.sparta.team2project.profile;
 
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
+import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
 import com.sparta.team2project.profile.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,9 +38,9 @@ public class ProfileController {
     // 프로필 수정하기(프로필이미지)
     @Operation(summary = "마이 페이지 프로필 수정(프로필사진)", description = "마이 페이지 (프로필사진)프로필 수정 api 입니다.")
     @PutMapping("/update-profileImg")
-    public ResponseEntity<MessageResponseDto> updateProfileImg(@RequestBody ProfileImgRequestDto requestDto,
-                                                            @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return profileService.updateProfileImg(requestDto, userDetails.getUsers());
+    public ProfileImgResponseDto updateProfileImg(@RequestParam("file")MultipartFile file,
+                                                       @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return profileService.updateProfileImg(file, userDetails.getUsers());
     }
 
     //프로필 수정하기(비밀번호)

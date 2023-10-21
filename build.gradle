@@ -22,6 +22,12 @@ repositories {
 }
 
 dependencies {
+	// Marvin
+	implementation 'com.github.downgoon:marvin:1.5.5'
+	implementation 'com.github.downgoon:MarvinPlugins:1.5.5'
+	testImplementation 'org.springframework:spring-test:6.0.13'
+	implementation 'org.springframework:spring-web:6.0.13'
+
 	// 소셜로그인
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
