@@ -70,7 +70,7 @@ public class PicturesService {
         // 1. 파일 정보를 picturesResponseDtoList에 저장
         for (MultipartFile file : files) {
             String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + "/" + "pictures" + "/" + picturesName;
+            String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "pictures" + "/" + picturesName;
             String pictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             // 2. 이미지 리사이즈 함수 호출
@@ -184,7 +184,7 @@ public class PicturesService {
         else{
             // 1. 파일 기본 정보 추출
             String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + "/" + "pictures" + "/" + picturesName;
+            String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "pictures" + "/" + picturesName;
             String pictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             // 2. 이미지 사이즈 재조정

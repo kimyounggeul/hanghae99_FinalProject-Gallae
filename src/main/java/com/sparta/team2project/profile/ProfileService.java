@@ -81,7 +81,7 @@ public class ProfileService {
         Profile findProfile = checkProfile(users); // 프로필 확인
         // 2. 파일 정보 추출
         String picturesName = file.getOriginalFilename();
-        String picturesURL = "https://" + bucket + "/" + "profileImg" + "/" + picturesName;
+        String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "profileImg" + "/" + picturesName;
         String pictureContentType = file.getContentType();
         String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
         // 3. 이미지 사이즈 재조정
@@ -114,9 +114,10 @@ public class ProfileService {
 
     public String readProfileImg(Long userId, Users users) {
         String filename = users.getProfileImg().substring(users.getProfileImg().lastIndexOf("/") + 1);
-        URL url = amazonS3Client.getUrl(bucket + "/profileImg", filename);
-        String urlText = "" + url;
-        return urlText;
+        String profileURL = users.getProfileImg();
+//        URL url = amazonS3Client.getUrl(bucket + "/profileImg", filename);
+//        String urlText = "" + url;
+        return profileURL;
     }
 
     @Transactional
