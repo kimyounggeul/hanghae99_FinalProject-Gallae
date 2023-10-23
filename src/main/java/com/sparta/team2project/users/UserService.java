@@ -11,6 +11,9 @@ import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
+import com.sparta.team2project.refreshToken.RefreshToken;
+import com.sparta.team2project.refreshToken.RefreshTokenRepository;
+import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -36,6 +39,8 @@ public class UserService {
     private final EmailService emailService;
     private final ValidNumberRepository validNumberRepository;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
+
 
     // ADMIN_TOKEN
     @Value("${ADMIN_TOKEN}")
@@ -154,19 +159,26 @@ public class UserService {
         return ResponseEntity.ok(new MessageResponseDto("회원탈퇴 완료", HttpStatus.OK.value()));
     }
 
+    // 로그인 기능
     public ResponseEntity<MessageResponseDto> login(LoginRequestDto requestDto, HttpServletResponse response) {
         Users users = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(() ->
                 new CustomException(ErrorCode.ID_NOT_FOUND)); // 이메일 여부 확인
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비번이 맞는지 확인
         }
-        String accessToken = jwtUtil.createToken(users.getEmail(), users.getUserRole()); // 토큰 생성
-        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole()); // 토큰 생성
+        TokenDto tokenDto = jwtUtil.createAllToken(users.getEmail(), users.getUserRole());
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByEmail(requestDto.getEmail());
 
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken); // 생성된 토큰 헤더에 넣기
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken); // 생성된 토큰 헤더에 넣기
+        if(refreshToken.isPresent()) {
+            RefreshToken updateToken = refreshToken.get().updateToken(tokenDto.getRefreshToken().substring(7));
+            refreshTokenRepository.save(updateToken);
+        } else {
+            RefreshToken newToken = new RefreshToken(tokenDto.getRefreshToken().substring(7), requestDto.getEmail());
+            refreshTokenRepository.save(newToken);
+        }
 
-
-        return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpServletResponse.SC_OK));
+        response.addHeader(jwtUtil.ACCESS_KEY, tokenDto.getAccessToken());
+        response.addHeader(jwtUtil.REFRESH_KEY, tokenDto.getRefreshToken());
+        return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
     }
 }

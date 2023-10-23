@@ -1,5 +1,9 @@
 package com.sparta.team2project.commons.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sparta.team2project.commons.entity.UserRoleEnum;
+import com.sparta.team2project.commons.exceptionhandler.CustomException;
+import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.commons.jwt.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -16,6 +20,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
+import static com.sparta.team2project.commons.jwt.JwtUtil.AUTHORIZATION_HEADER;
 
 
 @Slf4j(topic = "JWT 검증 및 인가")
@@ -34,39 +40,38 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain filterChain) throws ServletException, IOException {
 
         // *** 이전과 다른부분, 쿠키에서 토큰을 추출하던 것에서 getJwtFromHeader()를 통해 헤더에서 순수한 토큰을 추출하는 것으로 변경 간결해짐.
-        String tokenValue = jwtUtil.getJwtFromHeader(req);
 
-        if (StringUtils.hasText(tokenValue)) {
+        String accessToken = jwtUtil.resolveToken(req, jwtUtil.ACCESS_KEY);
+        String refreshToken = jwtUtil.resolveToken(req, jwtUtil.REFRESH_KEY);
+        log.info("dofilter 시작");
+        if(accessToken != null) {
+            if(jwtUtil.validateToken(accessToken)) {
+                log.info("엑세스 유효");
+                Claims accessInfo =jwtUtil.getUserInfoFromToken(accessToken);
+                accessInfo.get(AUTHORIZATION_HEADER);
+                setAuthentication(accessInfo.getSubject());
+            } else if(refreshToken != null && jwtUtil.refreshTokenValidation(refreshToken)) {
+                Claims refreshInfo = jwtUtil.getUserInfoFromToken(refreshToken);
 
-            if (!jwtUtil.validateToken(tokenValue)) {
-                log.error("Token Error");
-                return;
-            }
+                String roleString = (String)refreshInfo.get(AUTHORIZATION_HEADER);
+                UserRoleEnum userRole = null;
 
-            // 액세스 토큰 만료
-            if (jwtUtil.isRefreshToken(tokenValue)) {
-                // 리프레시 토큰인 경우, 액세스 토큰을 재발급
-                String newAccessToken = jwtUtil.reissueAccessToken(tokenValue);
-
-                if (newAccessToken != null) {
-                    // 새로운 액세스 토큰을 응답 헤더에 설정
-                    res.setHeader("Authorization", newAccessToken);
-                } else {
-                    log.error("Failed to reissue access token.");
-                    return;
+                if (roleString.equals("USER")) {
+                    userRole = UserRoleEnum.USER;
+                } else if (roleString.equals("ADMIN")) {
+                    userRole = UserRoleEnum.ADMIN;
                 }
-            }
 
-            Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
+                String newAccessToken = jwtUtil.createToken(refreshInfo.getSubject(), "Access", userRole);
+                jwtUtil.setHeaderAccessToken(res, newAccessToken);
 
-            try {
-                setAuthentication(info.getSubject());
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                return;
+                setAuthentication(refreshInfo.getSubject());
+            } else if(refreshToken == null) {
+                throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
+            } else {
+                throw new CustomException(ErrorCode.EXPIRED_REFRESH_TOKEN);
             }
         }
-
         filterChain.doFilter(req, res);
     }
 

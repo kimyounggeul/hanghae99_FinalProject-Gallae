@@ -71,7 +71,7 @@ public class ProfileService {
         Profile findProfile = checkProfile(users); // 프로필 확인
         // 2. 파일 정보 추출
         String picturesName = file.getOriginalFilename();
-        String picturesURL = "https://" + bucket + "/" + picturesName;
+        String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" +"/" + picturesName;
         String pictureContentType = file.getContentType();
         Long pictureSize = file.getSize();  // 단위: KBytes
         // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
