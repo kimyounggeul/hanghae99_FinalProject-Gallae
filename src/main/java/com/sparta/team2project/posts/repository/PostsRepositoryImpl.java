@@ -43,6 +43,7 @@ public class PostsRepositoryImpl implements PostsRepositoryCustom {
 
         long totalCount = factory
                 .select(posts.count()).from(posts)
+                .where(titleNotNull.and(contentsNotNull))
                 .fetchOne();
 
         return new PageImpl<>(result, pageable, totalCount);

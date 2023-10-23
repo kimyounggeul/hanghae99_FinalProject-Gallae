@@ -86,8 +86,13 @@ public class PostsService {
         Pageable pageable = PageRequest.of(page,size);
         Page<Posts> postsPage = postsRepository.findAllPosts(pageable);
 
-        List<PostResponseDto> postResponseDtos = getPostResponseDto(postsPage.getContent());
-        return new SliceImpl<>(postResponseDtos, pageable, postsPage.hasNext());
+        List<PostResponseDto> postResponseDtoList = new ArrayList<>();
+        for(Posts posts:postsPage){
+            int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
+            List<Tags> tag = tagsRepository.findByPosts(posts);
+            postResponseDtoList.add(new PostResponseDto(posts, tag, posts.getUsers(), commentNum));
+        }
+        return new SliceImpl<>(postResponseDtoList, pageable, postsPage.hasNext());
     }
 
     // 사용자별 게시글 전체 조회
@@ -148,6 +153,7 @@ public class PostsService {
         Pageable pageable = PageRequest.of(page,size);
         Users existUser = checkUser(users); // 사용자 조회
         Page<Posts> postsPage = postsRepository.findUsersLikePosts(existUser,pageable);
+
         if (postsPage.isEmpty()) {
             throw new CustomException(ErrorCode.POST_NOT_EXIST);
         }

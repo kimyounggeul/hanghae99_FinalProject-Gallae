@@ -70,7 +70,7 @@ public class PicturesService {
         // 1. 파일 정보를 picturesResponseDtoList에 저장
         for (MultipartFile file : files) {
             String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + "/" + picturesName;
+            String picturesURL = "https://" + bucket + "/" + "pictures" + "/" + picturesName;
             String pictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             // 2. 이미지 리사이즈 함수 호출
@@ -90,7 +90,7 @@ public class PicturesService {
             metadata.setContentType(resizedImage.getContentType());
             metadata.setContentLength(resizedImage.getSize());
             try (InputStream inputStream = resizedImage.getInputStream()) {
-                amazonS3Client.putObject(new PutObjectRequest(bucket, picturesName, inputStream, metadata)
+                amazonS3Client.putObject(new PutObjectRequest(bucket + "/pictures", picturesName, inputStream, metadata)
                         .withCannedAcl(CannedAccessControlList.PublicRead));
             } catch (IOException e) {
                 throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
@@ -116,7 +116,7 @@ public class PicturesService {
         for (Pictures pictures : picturesList) {
             // 3. 파일 불러오기
             try {
-                S3Object s3Object = amazonS3Client.getObject(bucket, pictures.getPicturesName());
+                S3Object s3Object = amazonS3Client.getObject(bucket + "/pictures", pictures.getPicturesName());
                 S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
                 FileOutputStream fileOutputStream = new FileOutputStream(new File(pictures.getPicturesName()));
                 byte[] read_buf = new byte[1024];
@@ -149,7 +149,7 @@ public class PicturesService {
             Pictures pictures = picturesRepository.findById(picturesId).orElseThrow(
                     () -> new CustomException(ErrorCode.ID_NOT_MATCH)
             );
-            S3Object s3Object = amazonS3Client.getObject(bucket, pictures.getPicturesName());
+            S3Object s3Object = amazonS3Client.getObject(bucket + "/pictures", pictures.getPicturesName());
             S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
             FileOutputStream fileOutputStream = new FileOutputStream(new File(pictures.getPicturesName()));
             byte[] read_buf = new byte[1024];
@@ -184,7 +184,7 @@ public class PicturesService {
         else{
             // 1. 파일 기본 정보 추출
             String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + "/" + picturesName;
+            String picturesURL = "https://" + bucket + "/" + "pictures" + "/" + picturesName;
             String pictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             // 2. 이미지 사이즈 재조정
@@ -199,7 +199,7 @@ public class PicturesService {
             metadata.setContentType(resizedImage.getContentType());
             metadata.setContentLength(resizedImage.getSize());
             try (InputStream inputStream = resizedImage.getInputStream()) {
-                amazonS3Client.putObject(new PutObjectRequest(bucket, picturesName, inputStream, metadata)
+                amazonS3Client.putObject(new PutObjectRequest(bucket + "/pictures", picturesName, inputStream, metadata)
                         .withCannedAcl(CannedAccessControlList.PublicRead));
             } catch (IOException e) {
                 throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
@@ -217,7 +217,7 @@ public class PicturesService {
                 () -> new CustomException(ErrorCode.ID_NOT_MATCH)
         );
         try {
-            amazonS3Client.deleteObject(bucket, pictures.getPicturesName());
+            amazonS3Client.deleteObject(bucket + "/pictures", pictures.getPicturesName());
         } catch (AmazonServiceException e) {
             throw new AmazonServiceException(e.getErrorMessage());
         }

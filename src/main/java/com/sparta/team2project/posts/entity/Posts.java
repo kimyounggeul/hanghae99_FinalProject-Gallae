@@ -31,7 +31,7 @@ public class Posts extends TimeStamped {
     @Column(nullable = true,length = 500)
     private String contents;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String subTitle;
 
     @Column(nullable = false)
@@ -71,6 +71,8 @@ public class Posts extends TimeStamped {
     public void updateTime(UpdateRequestDto updateRequestDto, LocalDateTime postTime) {
         this.title =  updateRequestDto.getTitle();
         this.contents = updateRequestDto.getContents();
+        this.postCategory = updateRequestDto.getPostCategory();
+        this.subTitle =updateRequestDto.getSubTitle();
         this.setCreatedAt(postTime);
     }
 }
