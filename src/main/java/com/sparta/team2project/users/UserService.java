@@ -11,6 +11,7 @@ import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
+import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -56,9 +57,12 @@ public class UserService {
         if (requestDto.getAdminToken() != null && ADMIN_TOKEN.equals(requestDto.getAdminToken())) {
             userRole = UserRoleEnum.ADMIN; // adminToken이 제공되면 ADMIN으로 설정
         }
-
+        // 닉네임이 이미 있을 경우 예외처리
+        if (userRepository.existsByNickName(requestDto.getNickName())) {
+            throw new CustomException(ErrorCode.DUPLICATED_NICKNAME);
+        }
         // 기본값 설정
-        String nickName = "익명";
+        String nickName = createRandomNickName();
         String profileImg = "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fb0SLv8%2FbtsyLoUxvAs%2FSKsGiOc7TzkebNvH4ZQE9K%2Fimg.png";
         // 입력값이 존재한다면 기본값 대체
         if (requestDto.getNickName() != null) {
@@ -140,6 +144,14 @@ public class UserService {
             return checkNumber; // 인증성공시 true 값이 반환됩니다.
         }
     }
+    // 닉네임 중복여부 체크 메서드
+    public boolean checkNickName(String nickName) {
+        boolean checkNickName = true;
+        if (userRepository.existsByNickName(nickName)) {
+            throw new CustomException(ErrorCode.DUPLICATED_NICKNAME);
+        }
+        return checkNickName; // 중복이 아닐 경우 true 값이 반환됩니다.
+    }
 
 
     // 회원탈퇴(연관관게 설정 필요) - 미완
@@ -168,5 +180,27 @@ public class UserService {
 
 
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpServletResponse.SC_OK));
+    }
+
+    // 랜덤 닉네임 생성 메서드
+    public String createRandomNickName() {
+        String[] nickName =
+                {"행복한", "즐거운", "평화로운", "요망진", "귀여운", "화가난", "달리는", "잠자는", "놀고있는", "하늘을나는", "여행가고싶은", "영앤리치", "목적지가없는", "바쁘다바빠!", "하고싶은말이많은", "어른스러운", "깜찍한", "엉뚱한", "소심한", "화이팅!", "두둠칫", "힘내랏"};
+        String[] nickName2 =
+                {"여행자", "뚜벅이", "배낭꾼", "백엔드개발자", "프론트엔드개발자", "디자이너", "캠핑족", "맛집탐방러", "힐링족", "프로그래머", "자유여행자", "휴가족", "현대사회", "예술가", "돌하루방", "편", "탈출러", "풀스택개발자", "하루와하트"};
+
+        int maxCreateRandomNickName = nickName.length * nickName2.length; // 경우의 수
+        int maxTries = 300;
+        for (int tries = 0; tries < maxTries; tries++) {
+            int random = (int) (Math.random() * nickName.length);
+            int random2 = (int) (Math.random() * nickName2.length);
+
+            String randomNickName = nickName[random] + " " + nickName2[random2];
+
+            if (!userRepository.existsByNickName(randomNickName)) {
+                return randomNickName;
+            }
+        }
+        throw new CustomException(ErrorCode.RANDOM_NICKNAME_FAIL);
     }
 }

@@ -63,8 +63,10 @@ public class ProfileService {
         checkAuthority(existUser, users); //권한 확인
         Profile findProfile = checkProfile(users); // 마이페이지 찾기
 
-
         //닉네임 업데이트
+        if (userRepository.existsByNickName(requestDto.getUpdateNickName())) {
+            throw new CustomException(ErrorCode.DUPLICATED_NICKNAME);
+        }
         findProfile.getUsers().updateNickName(requestDto);
         profileRepository.save(findProfile);
 
