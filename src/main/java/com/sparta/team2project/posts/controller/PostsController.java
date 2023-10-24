@@ -76,7 +76,7 @@ public class PostsController {
     // 좋아요 기능
     @Operation(summary = " 좋아요 기능 ", description = "좋아요 클릭시 1 좋아요 또 누르면 1 취소하는 api 입니다.")
     @GetMapping("/posts/like/{postId}")
-    public ResponseEntity<MessageResponseDto> like(@PathVariable Long postId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<LikeResponseDto> like(@PathVariable Long postId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(postsService.like(postId,userDetails.getUsers()));
     }
 

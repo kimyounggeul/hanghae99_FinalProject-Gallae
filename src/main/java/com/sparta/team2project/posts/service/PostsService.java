@@ -165,7 +165,7 @@ public class PostsService {
     }
 
     // 게시글 좋아요 및 좋아요 취소
-    public MessageResponseDto like(Long id, Users users){
+    public LikeResponseDto like(Long id, Users users){
         Posts posts = checkPosts(id); // 게시글 조회
 
         Users existUser = checkUser(users); // 사용자 조회
@@ -174,13 +174,13 @@ public class PostsService {
         if(overlap!=null){
             postsLikeRepository.delete(overlap); // 좋아요 삭제
             posts.unlike(); // 해당 게시물 좋아요 취소시키는 메서드
-            return new MessageResponseDto("좋아요 취소",HttpServletResponse.SC_OK);
+            return new LikeResponseDto("좋아요 취소",HttpServletResponse.SC_OK,false);
         }
         else{
             PostsLike postsLike = new PostsLike(posts,existUser);
             postsLikeRepository.save(postsLike); // 좋아요 저장
             posts.like(); // 해당 게시물 좋아요수 증가시키는 메서드
-            return new MessageResponseDto("좋아요 확인",HttpServletResponse.SC_OK);
+            return new LikeResponseDto("좋아요 확인",HttpServletResponse.SC_OK,true);
         }
     }
 

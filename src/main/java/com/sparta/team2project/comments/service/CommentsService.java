@@ -41,22 +41,29 @@ public class CommentsService {
 
         return new MessageResponseDto ("댓글을 작성하였습니다", 200);
     }
+
     // 댓글 조회
     public Slice<CommentsResponseDto> commentsList(Long postId,
                                                    Pageable pageable) {
 
+        Posts posts = postsRepository.findById(postId).orElseThrow(
+                () -> new CustomException(ErrorCode.POST_NOT_EXIST)); // 존재하지 않는 게시글입니다
+
         Slice<Comments> commentsList = commentsRepository.findByPosts_IdOrderByCreatedAtDesc(postId, pageable);
 
         if (commentsList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST); // 존재하지 않는 게시글입니다
+            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
         }
 
         List<CommentsResponseDto> commentsResponseDtoList = new ArrayList<>();
 
         for (Comments comments : commentsList) {
-            commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getNickname()));
+            if (posts.getUsers().getEmail().equals(comments.getEmail())) {
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getEmail(), "글쓴이"));
+            } else {
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getEmail()));
+            }
         }
-
         return new SliceImpl<>(commentsResponseDtoList, pageable, commentsList.hasNext());
     }
 
@@ -67,7 +74,7 @@ public class CommentsService {
         Slice<Comments> commentsMeList = commentsRepository.findAllByAndEmailOrderByCreatedAtDesc(users.getEmail(), pageable);
 
         if (commentsMeList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST); // 존재하지 않는 게시글입니다
+            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
         }
 
         List<CommentsMeResponseDto> CommentsMeResponseDtoList = new ArrayList<>();

@@ -23,8 +23,6 @@ public class Comments extends TimeStamped {
     @Column(name ="comments_id")
     private  Long id;
 
-    private String nickname;
-
     private String email;
 
     @Column(nullable = false, length = 500)
@@ -39,14 +37,12 @@ public class Comments extends TimeStamped {
 
 
     public Comments(CommentsRequestDto requestDto, Users users, Posts posts) {
-        this.nickname = users.getNickName();
         this.contents = requestDto.getContents();
         this.posts = posts;
         this.email = users.getEmail();
     }
 
     public void update(CommentsRequestDto requestDto, Users users) {
-        this.nickname = users.getNickName();
         this.contents = requestDto.getContents();
     }
 }
