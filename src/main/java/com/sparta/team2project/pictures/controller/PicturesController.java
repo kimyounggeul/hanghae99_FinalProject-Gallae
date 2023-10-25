@@ -47,12 +47,12 @@ public class PicturesController {
         return picturesService.getPicture(picturesId);
     }
 
-    @PutMapping("/schedules/{schedulesId}/pictures")
-    public PicturesMessageResponseDto updatePictures(@PathVariable("schedulesId") Long schedulesId,
+    @PutMapping("/pictures/{picturesId}")
+    public PicturesMessageResponseDto updatePictures(@PathVariable("picturesId") Long picturesId,
                                                      @RequestParam("file") MultipartFile file,
                                                      @AuthenticationPrincipal UserDetailsImpl userDetails
                                           ){
-        return picturesService.updatePictures(schedulesId, file, userDetails.getUsers());
+        return picturesService.updatePictures(picturesId, file, userDetails.getUsers());
     }
 
 

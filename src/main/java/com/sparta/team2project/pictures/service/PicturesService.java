@@ -66,42 +66,53 @@ public class PicturesService {
                 () -> new CustomException(ErrorCode.ID_NOT_MATCH)
         );
         List<Pictures> checkPicturesList = checkSchedules.getPicturesList();
-        List<PicturesResponseDto> picturesResponseDtoList = new ArrayList<>(3);
-        // 1. 파일 정보를 picturesResponseDtoList에 저장
-        for (MultipartFile file : files) {
-            String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "pictures" + "/" + picturesName;
-            String pictureContentType = file.getContentType();
-            String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
-            // 2. 이미지 리사이즈 함수 호출
-            MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
-            Long pictureSize = resizedImage.getSize();  // 단위: KBytes
-            PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
-                    schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
-            picturesResponseDtoList.add(picturesResponseDto);
-            // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
-            Schedules schedules = schedulesRepository.findById(schedulesId).orElseThrow(
-                    () -> new CustomException(ErrorCode.ID_NOT_MATCH)
-            );
-            Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
-            checkPicturesList.add(pictures);
-            // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(resizedImage.getContentType());
-            metadata.setContentLength(resizedImage.getSize());
-            try (InputStream inputStream = resizedImage.getInputStream()) {
-                amazonS3Client.putObject(new PutObjectRequest(bucket + "/pictures", picturesName, inputStream, metadata)
-                        .withCannedAcl(CannedAccessControlList.PublicRead));
-            } catch (IOException e) {
-                throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
-            }
+        // 기 존재하는 사진 모음이 3개인지 확인
+        if (checkPicturesList.size() == 3) {
+            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
         }
+        // 이미 입력된 사진 + 새로 입력할 사진이 3개를 초과하면 예외처리
+        else if (files.size() + checkPicturesList.size() > 3) {
+            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
+        }
+        // 그외의 경우 사진 등록
+        else {
+            List<PicturesResponseDto> picturesResponseDtoList = new ArrayList<>(3);
+            // 1. 파일 정보를 picturesResponseDtoList에 저장
+            for (MultipartFile file : files) {
+                String picturesName = file.getOriginalFilename();
+                String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "schedulesPictures" + "/" + picturesName;
+                String pictureContentType = file.getContentType();
+                String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+                // 2. 이미지 리사이즈 함수 호출
+                MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+                Long pictureSize = resizedImage.getSize();  // 단위: KBytes
+                PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
+                        schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
+                picturesResponseDtoList.add(picturesResponseDto);
+                // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
+                Schedules schedules = schedulesRepository.findById(schedulesId).orElseThrow(
+                        () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+                );
+                Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
+                checkPicturesList.add(pictures);
+                // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType(resizedImage.getContentType());
+                metadata.setContentLength(resizedImage.getSize());
+                try (InputStream inputStream = resizedImage.getInputStream()) {
+                    amazonS3Client.putObject(new PutObjectRequest(bucket + "/schedulesPictures", picturesName, inputStream, metadata)
+                            .withCannedAcl(CannedAccessControlList.PublicRead));
+                } catch (IOException e) {
+                    throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
+                }
+            }
 
-        // 4. Repository에 Pictures리스트를 저장
-        picturesRepository.saveAll(checkPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
-        MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
-        UploadResponseDto uploadResponseDto = new UploadResponseDto(picturesResponseDtoList, messageResponseDto);
-        return uploadResponseDto;
+            // 4. Repository에 Pictures리스트를 저장
+            picturesRepository.saveAll(checkPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
+            MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
+            UploadResponseDto uploadResponseDto = new UploadResponseDto(picturesResponseDtoList, messageResponseDto);
+            return uploadResponseDto;
+        }
     }
 
 
@@ -116,7 +127,7 @@ public class PicturesService {
         for (Pictures pictures : picturesList) {
             // 3. 파일 불러오기
             try {
-                S3Object s3Object = amazonS3Client.getObject(bucket + "/pictures", pictures.getPicturesName());
+                S3Object s3Object = amazonS3Client.getObject(bucket + "/schedulesPictures", pictures.getPicturesName());
                 S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
                 FileOutputStream fileOutputStream = new FileOutputStream(new File(pictures.getPicturesName()));
                 byte[] read_buf = new byte[1024];
@@ -149,7 +160,7 @@ public class PicturesService {
             Pictures pictures = picturesRepository.findById(picturesId).orElseThrow(
                     () -> new CustomException(ErrorCode.ID_NOT_MATCH)
             );
-            S3Object s3Object = amazonS3Client.getObject(bucket + "/pictures", pictures.getPicturesName());
+            S3Object s3Object = amazonS3Client.getObject(bucket + "/schedulesPictures", pictures.getPicturesName());
             S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
             FileOutputStream fileOutputStream = new FileOutputStream(new File(pictures.getPicturesName()));
             byte[] read_buf = new byte[1024];
@@ -170,44 +181,37 @@ public class PicturesService {
         }
     }
 
-    public PicturesMessageResponseDto updatePictures(Long schedulesId, MultipartFile file, Users users) {
+    public PicturesMessageResponseDto updatePictures(Long picturesId, MultipartFile file, Users users) {
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users);         // 권한 확인
-        Schedules schedules = schedulesRepository.findById(schedulesId).orElseThrow(
+        Pictures pictures = picturesRepository.findById(picturesId).orElseThrow(
                 () -> new CustomException(ErrorCode.ID_NOT_MATCH));
-        List<Pictures> picturesList = schedules.getPicturesList();
-        // 기 등록된 사진이 이미 3개 인지 검사해서 이미 3개 일 경우, 예외 메시지 출력
-        if(picturesList.size() == 3){
-            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
+        // 1. 파일 기본 정보 추출
+        String picturesName = file.getOriginalFilename();
+        String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "schedulesPictures" + "/" + picturesName;
+        String pictureContentType = file.getContentType();
+        String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+        // 2. 이미지 사이즈 재조정
+        MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+        Long pictureSize = resizedImage.getSize();  // 단위: KBytes
+        Long schedulesId = pictures.getSchedules().getId();
+        PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
+               schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
+        pictures.updatePictures(picturesURL, picturesName, pictureContentType, pictureSize);
+        picturesRepository.save(pictures);
+        // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(resizedImage.getContentType());
+        metadata.setContentLength(resizedImage.getSize());
+        try (InputStream inputStream = resizedImage.getInputStream()) {
+            amazonS3Client.putObject(new PutObjectRequest(bucket + "/schedulesPictures", picturesName, inputStream, metadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
         }
-        // 아닐 경우 요청된 사진 입력
-        else{
-            // 1. 파일 기본 정보 추출
-            String picturesName = file.getOriginalFilename();
-            String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "pictures" + "/" + picturesName;
-            String pictureContentType = file.getContentType();
-            String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
-            // 2. 이미지 사이즈 재조정
-            MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
-            Long pictureSize = resizedImage.getSize();  // 단위: KBytes
-            PicturesResponseDto picturesResponseDto = new PicturesResponseDto(
-                    schedulesId, picturesURL, picturesName, pictureContentType, pictureSize);
-            Pictures pictures = new Pictures(schedules, picturesURL, picturesName, pictureContentType, pictureSize);
-            picturesRepository.save(pictures);
-            // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(resizedImage.getContentType());
-            metadata.setContentLength(resizedImage.getSize());
-            try (InputStream inputStream = resizedImage.getInputStream()) {
-                amazonS3Client.putObject(new PutObjectRequest(bucket + "/pictures", picturesName, inputStream, metadata)
-                        .withCannedAcl(CannedAccessControlList.PublicRead));
-            } catch (IOException e) {
-                throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
-            }
-            MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
-            PicturesMessageResponseDto picturesMessageResponseDto = new PicturesMessageResponseDto(picturesResponseDto, messageResponseDto);
-            return picturesMessageResponseDto;
-        }
+        MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
+        PicturesMessageResponseDto picturesMessageResponseDto = new PicturesMessageResponseDto(picturesResponseDto, messageResponseDto);
+        return picturesMessageResponseDto;
     }
 
     public MessageResponseDto deletePictures(Long picturesId, Users users) {
@@ -217,7 +221,7 @@ public class PicturesService {
                 () -> new CustomException(ErrorCode.ID_NOT_MATCH)
         );
         try {
-            amazonS3Client.deleteObject(bucket + "/pictures", pictures.getPicturesName());
+            amazonS3Client.deleteObject(bucket + "/schedulesPictures", pictures.getPicturesName());
         } catch (AmazonServiceException e) {
             throw new AmazonServiceException(e.getErrorMessage());
         }
@@ -237,7 +241,7 @@ public class PicturesService {
             int originHeight = image.getHeight();
 
             // origin 이미지가 400보다 작으면 패스
-            if(originWidth < width)
+            if (originWidth < width)
                 return originalImage;
 
             MarvinImage imageMarvin = new MarvinImage(image);
@@ -253,7 +257,7 @@ public class PicturesService {
             ImageIO.write(imageNoAlpha, fileFormat, baos);
             baos.flush();
 
-            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
+            return new CustomMultipartFile(fileName, fileFormat, originalImage.getContentType(), baos.toByteArray());
 
         } catch (IOException e) {
             throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);

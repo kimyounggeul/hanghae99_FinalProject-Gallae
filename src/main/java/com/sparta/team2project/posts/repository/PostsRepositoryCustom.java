@@ -14,4 +14,6 @@ public interface PostsRepositoryCustom {
     Set<Posts> searchKeyword(String keyword);
 
     Page<Posts> findUsersLikePosts(Users existUser,Pageable pageable);
+
+    List<Long>  findUsersLikePostsId(Users existUser);
 }

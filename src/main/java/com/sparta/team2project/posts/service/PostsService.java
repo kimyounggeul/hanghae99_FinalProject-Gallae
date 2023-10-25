@@ -1,16 +1,31 @@
 package com.sparta.team2project.posts.service;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.*;
 import com.sparta.team2project.comments.entity.Comments;
 import com.sparta.team2project.comments.repository.CommentsRepository;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
+import com.sparta.team2project.pictures.dto.PicturesResponseDto;
+import com.sparta.team2project.pictures.dto.UploadResponseDto;
+import com.sparta.team2project.pictures.entity.Pictures;
+import com.sparta.team2project.posts.dto.PostsPicturesResponseDto;
+import com.sparta.team2project.posts.dto.PostsPicturesUploadResponseDto;
+import com.sparta.team2project.posts.entity.PostsPictures;
 import com.sparta.team2project.posts.dto.*;
 import com.sparta.team2project.posts.entity.Posts;
+import com.sparta.team2project.posts.repository.PostsPicturesRepository;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.postslike.entity.PostsLike;
 import com.sparta.team2project.postslike.repository.PostsLikeRepository;
+import com.sparta.team2project.s3.AmazonS3ResourceStorage;
+import com.sparta.team2project.s3.CustomMultipartFile;
+import com.sparta.team2project.schedules.entity.Schedules;
+import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.tags.entity.Tags;
 import com.sparta.team2project.tags.repository.TagsRepository;
 import com.sparta.team2project.tripdate.entity.TripDate;
@@ -19,10 +34,18 @@ import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import marvin.image.MarvinImage;
+import org.marvinproject.image.transform.scale.Scale;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,6 +62,14 @@ public class PostsService {
     private final UserRepository usersRepository;
     private final CommentsRepository commentsRepository;
     private final TagsRepository tagsRepository;
+
+    // 사진 저장을 위한 필드 선언
+    private final AmazonS3ResourceStorage amazonS3ResourceStorage;
+    private final AmazonS3Client amazonS3Client;
+    private final PostsPicturesRepository postsPicturesRepository;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
 
     // 게시글 생성
     public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto,Users users) {
@@ -111,7 +142,6 @@ public class PostsService {
                 List<TripDate> tripDateList = tripDateRepository.findByPosts(posts);
 
                 postResponseDtoList.add(new PostResponseDto(posts, tags, posts.getUsers(), commentNum, tripDateList));
-
         }
         return postResponseDtoList;
     }
@@ -119,7 +149,7 @@ public class PostsService {
     // 키워드 검색
     public List<PostResponseDto> getKeywordPosts(String keyword){
 
-        if(keyword==null){ // 키워드가 null값인 경우
+        if(keyword==null || keyword.isEmpty()){ // 키워드가 null값인 경우
             throw new CustomException(ErrorCode.POST_NOT_SEARCH);
         }
 
@@ -162,6 +192,18 @@ public class PostsService {
             postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
         }
         return new PageImpl<>(postResponseDtoList, pageable, postsPage.getTotalElements());
+    }
+
+    // 사용자가 좋아요 누른 게시물 id만 조회
+    public List<Long> getUserLikePostsId(Users users) {
+
+        Users existUser = checkUser(users); // 사용자 조회
+        List<Long> idList = postsRepository.findUsersLikePostsId(existUser);
+
+        if (idList.isEmpty()) {
+            throw new CustomException(ErrorCode.POST_NOT_EXIST);
+        }
+        return idList;
     }
 
     // 게시글 좋아요 및 좋아요 취소
@@ -242,7 +284,7 @@ public class PostsService {
     }
 
     // ADMIN 권한 및 이메일 일치여부 메서드
-    private void checkAuthority(Users existUser,Users users){
+    public void checkAuthority(Users existUser, Users users){
         if (!existUser.getUserRole().equals(UserRoleEnum.ADMIN)&&!existUser.getEmail().equals(users.getEmail())) {throw new CustomException(ErrorCode.NOT_ALLOWED);
         }
     }
@@ -265,4 +307,208 @@ public class PostsService {
         }
         return postResponseDtoList;
     }
+
+    // 사진 업로드 사이즈 조정 메서드
+    @Transactional
+    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+
+        try {
+            BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
+
+            int originWidth = image.getWidth();
+            int originHeight = image.getHeight();
+
+            // origin 이미지가 400보다 작으면 패스
+            if(originWidth < width)
+                return originalImage;
+
+            MarvinImage imageMarvin = new MarvinImage(image);
+
+            Scale scale = new Scale();
+            scale.load();
+            scale.setAttribute("newWidth", width);
+            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
+            scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
+
+            BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(imageNoAlpha, fileFormat, baos);
+            baos.flush();
+
+            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
+
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);
+        }
+    }
+
+    // 게시글 사진 업로드 API
+    @SneakyThrows
+    public PostsPicturesUploadResponseDto uploadPostsPictures(Long postId, List<MultipartFile> files, Users users) {
+        Users existUser = checkUser(users); // 유저 확인
+        checkAuthority(existUser, users);         // 권한 확인
+        // 기 존재하는 사진이 있는지 확인
+        Posts checkPosts = postsRepository.findById(postId).orElseThrow(
+                () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+        );
+        List<PostsPictures> checkPostsPicturesList = checkPosts.getPostsPicturesList();
+        List<PostsPicturesResponseDto> postsPicturesResponseDtoList = new ArrayList<>();
+        // 1. 파일 정보를 picturesResponseDtoList에 저장
+        for (int i = 0; i < files.size(); i++) {
+            // 해당 위치의 파일 이름이 null값이면 사진 등록 작업 수행
+            if (checkPostsPicturesList.get(i).getPostsPicturesName() == null) {
+                String postsPicturesName = files.get(i).getOriginalFilename();
+                String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
+                String postsPictureContentType = files.get(i).getContentType();
+                String fileFormatName = files.get(i).getContentType().substring(files.get(i).getContentType().lastIndexOf("/") + 1);
+                // 2. 이미지 리사이즈 함수 호출
+                MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, files.get(i), 250);
+                Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+                PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
+                        postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+                postsPicturesResponseDtoList.add(postsPicturesResponseDto);
+                // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
+                Posts posts = postsRepository.findById(postId).orElseThrow(
+                        () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+                );
+                // 4. 기 존재하는 PostsPictures의 null값들을 업데이트
+                PostsPictures postsPictures = checkPostsPicturesList.get(i);
+                postsPictures.updatePostsPictures(postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+                checkPostsPicturesList.add(postsPictures);
+                // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType(resizedImage.getContentType());
+                metadata.setContentLength(resizedImage.getSize());
+                try (InputStream inputStream = resizedImage.getInputStream()) {
+                    amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
+                            .withCannedAcl(CannedAccessControlList.PublicRead));
+                } catch (IOException e) {
+                    throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
+                }
+            }
+
+
+        }
+        // 4. Repository에 Pictures리스트를 저장
+        postsPicturesRepository.saveAll(checkPostsPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
+        MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
+        PostsPicturesUploadResponseDto postsPicturesUploadResponseDto = new PostsPicturesUploadResponseDto(postsPicturesResponseDtoList, messageResponseDto);
+        return postsPicturesUploadResponseDto;
+    }
+
+    public PostsPicturesUploadResponseDto getPostsPictures(Long postId) {
+        // 1. Schedules 객체를 찾아 연결된 Pictures 불러오기
+        Posts posts = postsRepository.findById(postId).orElseThrow(
+                () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+        );
+        // 2. 불러온 Pictures의 리스트를 DTO의 리스트로 변환
+        List<PostsPictures> postsPicturesList = posts.getPostsPicturesList();
+        List<PostsPicturesResponseDto> postsPicturesResponseDtoList = new ArrayList<>(3);
+        for (PostsPictures postsPictures : postsPicturesList) {
+            // 3. 파일 불러오기
+            try {
+                S3Object s3Object = amazonS3Client.getObject(bucket + "/postsPictures", postsPictures.getPostsPicturesName());
+                S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
+                FileOutputStream fileOutputStream = new FileOutputStream(new File(postsPictures.getPostsPicturesName()));
+                byte[] read_buf = new byte[1024];
+                int read_len = 0;
+                while ((read_len = s3ObjectInputStream.read(read_buf)) > 0) {
+                    fileOutputStream.write(read_buf, 0, read_len);
+                }
+                s3ObjectInputStream.close();
+                fileOutputStream.close();
+            } catch (AmazonServiceException e) {
+                throw new AmazonServiceException(e.getErrorMessage());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+            // 4. 각 사진 파일 정보(Pictures)를 DTO리스트에 저장
+            PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(postsPictures);
+            postsPicturesResponseDtoList.add(postsPicturesResponseDto);
+        }
+        // 5. 성공 메시지와 함께 사진 정보 반환
+        MessageResponseDto messageResponseDto = new MessageResponseDto("요청한 파일을 반환하였습니다.", 200);
+        PostsPicturesUploadResponseDto postsPicturesUploadResponseDto = new PostsPicturesUploadResponseDto(postsPicturesResponseDtoList, messageResponseDto);
+        return postsPicturesUploadResponseDto;
+    }
+
+    public PostsPicturesResponseDto getPostsPicture(Long postsPicturesId) {
+        try {
+            // 1. 파일을 찾아 열기
+            PostsPictures postsPictures = postsPicturesRepository.findById(postsPicturesId).orElseThrow(
+                    () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+            );
+            S3Object s3Object = amazonS3Client.getObject(bucket + "/postsPictures", postsPictures.getPostsPicturesName());
+            S3ObjectInputStream s3ObjectInputStream = s3Object.getObjectContent();
+            FileOutputStream fileOutputStream = new FileOutputStream(new File(postsPictures.getPostsPicturesName()));
+            byte[] read_buf = new byte[1024];
+            int read_len = 0;
+            while ((read_len = s3ObjectInputStream.read(read_buf)) > 0) {
+                fileOutputStream.write(read_buf, 0, read_len);
+            }
+            s3ObjectInputStream.close();
+            fileOutputStream.close();
+            // 2. 사진 파일 정보(Pictures) 반환
+            return new PostsPicturesResponseDto(postsPictures);
+        } catch (AmazonServiceException e) {
+            throw new AmazonServiceException(e.getErrorMessage());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public PostsPicturesMessageResponseDto updatePictures(Long postsPicturesId, MultipartFile file, Users users) {
+        Users existUser = checkUser(users); // 유저 확인
+        checkAuthority(existUser, users);         // 권한 확인
+        PostsPictures postsPictures = postsPicturesRepository.findById(postsPicturesId).orElseThrow(
+                () -> new CustomException(ErrorCode.ID_NOT_MATCH));
+        // 1. 파일 기본 정보 추출
+        String postsPicturesName = file.getOriginalFilename();
+        String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
+        String postsPictureContentType = file.getContentType();
+        String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+        // 2. 이미지 사이즈 재조정
+        MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
+        Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+        Long postId = postsPictures.getPosts().getId();
+        PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
+                postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+        postsPictures.updatePostsPictures(postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+        postsPicturesRepository.save(postsPictures);
+        // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType(resizedImage.getContentType());
+        metadata.setContentLength(resizedImage.getSize());
+        try (InputStream inputStream = resizedImage.getInputStream()) {
+            amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
+        }
+        MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
+        PostsPicturesMessageResponseDto postsPicturesMessageResponseDto = new PostsPicturesMessageResponseDto(postsPicturesResponseDto, messageResponseDto);
+        return postsPicturesMessageResponseDto;
+    }
+
+    public MessageResponseDto deletePictures(Long postsPicturesId, Users users) {
+        Users existUser = checkUser(users); // 유저 확인
+        checkAuthority(existUser, users);         // 권한 확인
+        PostsPictures postsPictures = postsPicturesRepository.findById(postsPicturesId).orElseThrow(
+                () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+        );
+        try {
+            amazonS3Client.deleteObject(bucket + "/postsPictures", postsPictures.getPostsPicturesName());
+        } catch (AmazonServiceException e) {
+            throw new AmazonServiceException(e.getErrorMessage());
+        }
+        postsPicturesRepository.delete(postsPictures);
+        MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 삭제되었습니다.", 200);
+        return messageResponseDto;
+    }
+
+
 }

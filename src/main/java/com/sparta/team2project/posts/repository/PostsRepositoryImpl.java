@@ -90,4 +90,19 @@ public class PostsRepositoryImpl implements PostsRepositoryCustom {
 
 
     }
+
+    @Override
+    public List<Long>  findUsersLikePostsId(Users existUser){
+        return factory
+                .select(posts.id)
+                .from(posts)
+                .leftJoin(postsLike).on(postsLike.posts.eq(posts)).fetchJoin()
+                .where(postsLike.users.eq(existUser).and(postsLike.posts.id.in( JPAExpressions.select(posts.id)
+                                .from(posts)
+                                .where(posts.title.isNotNull().and(posts.contents.isNotNull()))
+                        ))
+                )
+                .orderBy(postsLike.id.desc())
+                .fetch();
+    }
 }
