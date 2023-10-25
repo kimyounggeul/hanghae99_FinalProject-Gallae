@@ -64,9 +64,9 @@ public class RepliesService {
 
         for (Replies replies : repliesList) {
             if (posts.getUsers().getEmail().equals(replies.getEmail())) {
-                RepliesResponseDtoList.add(new RepliesResponseDto(replies, replies.getEmail(), "글쓴이"));
+                RepliesResponseDtoList.add(new RepliesResponseDto(replies, "글쓴이"));
             } else {
-                RepliesResponseDtoList.add(new RepliesResponseDto(replies, replies.getEmail()));
+                RepliesResponseDtoList.add(new RepliesResponseDto(replies));
             }
         }
         return new SliceImpl<>(RepliesResponseDtoList, pageable, repliesList.hasNext());

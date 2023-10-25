@@ -59,9 +59,9 @@ public class CommentsService {
 
         for (Comments comments : commentsList) {
             if (posts.getUsers().getEmail().equals(comments.getEmail())) {
-                commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getEmail(), "글쓴이"));
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, "글쓴이"));
             } else {
-                commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getEmail()));
+                commentsResponseDtoList.add(new CommentsResponseDto(comments));
             }
         }
         return new SliceImpl<>(commentsResponseDtoList, pageable, commentsList.hasNext());

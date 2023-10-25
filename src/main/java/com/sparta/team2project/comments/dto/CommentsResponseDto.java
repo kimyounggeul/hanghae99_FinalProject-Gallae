@@ -12,26 +12,30 @@ public class CommentsResponseDto {
     private Long commentId;
     private String contents;
     private String email;
+    private String nickname;
     private String checkUser;
     private LocalDateTime createAt;
     private LocalDateTime modifiedAt;
 
 
 
-    public CommentsResponseDto(Comments comments, String users) {
+    public CommentsResponseDto(Comments comments) {
         this.commentId = comments.getId();
         this.contents = comments.getContents();
         this.createAt = comments.getCreatedAt();
         this.modifiedAt = comments.getModifiedAt();
-        this.email = users;
+        this.email = comments.getEmail();
+        this.nickname = comments.getNickname();
     }
 
-    public CommentsResponseDto(Comments comments, String users, String checkUser) {
+    public CommentsResponseDto(Comments comments, String checkUser) {
         this.commentId = comments.getId();
         this.contents = comments.getContents();
         this.createAt = comments.getCreatedAt();
         this.modifiedAt = comments.getModifiedAt();
-        this.email = users;
+        this.email = comments.getEmail();
+        this.nickname = comments.getNickname();
         this.checkUser = checkUser;
     }
 }
+
