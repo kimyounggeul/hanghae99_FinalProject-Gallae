@@ -104,8 +104,8 @@ public class PostsController {
         return ResponseEntity.ok(postsService.deletePost(postId,userDetails.getUsers()));
     }
 
-    // 사진 등록 API (PUT) 메서드
-    @PutMapping("/posts/{postId}/postsPictures")
+    // 사진 등록 API 메서드
+    @PostMapping("/posts/{postId}/postsPictures")
     public PostsPicturesUploadResponseDto uploadPictures(@PathVariable("postId") Long postId,
                                             @RequestPart("file") List<MultipartFile> files,
                                             @AuthenticationPrincipal UserDetailsImpl userDetails

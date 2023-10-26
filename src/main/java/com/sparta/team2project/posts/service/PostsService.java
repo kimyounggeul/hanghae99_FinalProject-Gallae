@@ -352,48 +352,53 @@ public class PostsService {
                 () -> new CustomException(ErrorCode.ID_NOT_MATCH)
         );
         List<PostsPictures> checkPostsPicturesList = checkPosts.getPostsPicturesList();
-        List<PostsPicturesResponseDto> postsPicturesResponseDtoList = new ArrayList<>();
-        // 1. 파일 정보를 picturesResponseDtoList에 저장
-        for (int i = 0; i < files.size(); i++) {
-            // 해당 위치의 파일 이름이 null값이면 사진 등록 작업 수행
-            if (checkPostsPicturesList.get(i).getPostsPicturesName() == null) {
-                String postsPicturesName = files.get(i).getOriginalFilename();
-                String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
-                String postsPictureContentType = files.get(i).getContentType();
-                String fileFormatName = files.get(i).getContentType().substring(files.get(i).getContentType().lastIndexOf("/") + 1);
-                // 2. 이미지 리사이즈 함수 호출
-                MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, files.get(i), 250);
-                Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
-                PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
-                        postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
-                postsPicturesResponseDtoList.add(postsPicturesResponseDto);
-                // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
-                Posts posts = postsRepository.findById(postId).orElseThrow(
-                        () -> new CustomException(ErrorCode.ID_NOT_MATCH)
-                );
-                // 4. 기 존재하는 PostsPictures의 null값들을 업데이트
-                PostsPictures postsPictures = checkPostsPicturesList.get(i);
-                postsPictures.updatePostsPictures(postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
-                checkPostsPicturesList.add(postsPictures);
-                // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentType(resizedImage.getContentType());
-                metadata.setContentLength(resizedImage.getSize());
-                try (InputStream inputStream = resizedImage.getInputStream()) {
-                    amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
-                            .withCannedAcl(CannedAccessControlList.PublicRead));
-                } catch (IOException e) {
-                    throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
-                }
-            }
-
-
+        // 기 존재하는 사진 모음이 3개인지 확인
+        if (checkPostsPicturesList.size() == 3) {
+            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
         }
-        // 4. Repository에 Pictures리스트를 저장
-        postsPicturesRepository.saveAll(checkPostsPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
-        MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
-        PostsPicturesUploadResponseDto postsPicturesUploadResponseDto = new PostsPicturesUploadResponseDto(postsPicturesResponseDtoList, messageResponseDto);
-        return postsPicturesUploadResponseDto;
+        // 이미 입력된 사진 + 새로 입력할 사진이 3개를 초과하면 예외처리
+        else if (files.size() + checkPostsPicturesList.size() > 3) {
+            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
+        }
+        else{
+            List<PostsPicturesResponseDto> postsPicturesResponseDtoList = new ArrayList<>();
+            // 1. 파일 정보를 picturesResponseDtoList에 저장
+            for (MultipartFile file: files) {
+                // 해당 위치의 파일 이름이 null값이면 사진 등록 작업 수행
+                    String postsPicturesName = file.getOriginalFilename();
+                    String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
+                    String postsPictureContentType = file.getContentType();
+                    String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+                    // 2. 이미지 리사이즈 함수 호출
+                    MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
+                    Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+                    PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
+                            postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+                    postsPicturesResponseDtoList.add(postsPicturesResponseDto);
+                    // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
+                    Posts posts = postsRepository.findById(postId).orElseThrow(
+                            () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+                    );
+                    // 4. 기 존재하는 PostsPictures의 null값들을 업데이트
+                    PostsPictures postsPictures = new PostsPictures(posts, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+                    checkPostsPicturesList.add(postsPictures);
+                    // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
+                    ObjectMetadata metadata = new ObjectMetadata();
+                    metadata.setContentType(resizedImage.getContentType());
+                    metadata.setContentLength(resizedImage.getSize());
+                    try (InputStream inputStream = resizedImage.getInputStream()) {
+                        amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
+                                .withCannedAcl(CannedAccessControlList.PublicRead));
+                    } catch (IOException e) {
+                        throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
+                    }
+            }
+            // 4. Repository에 Pictures리스트를 저장
+            postsPicturesRepository.saveAll(checkPostsPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
+            MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
+            PostsPicturesUploadResponseDto postsPicturesUploadResponseDto = new PostsPicturesUploadResponseDto(postsPicturesResponseDtoList, messageResponseDto);
+            return postsPicturesUploadResponseDto;
+        }
     }
 
     public PostsPicturesUploadResponseDto getPostsPictures(Long postId) {
