@@ -232,7 +232,7 @@ public class PicturesService {
 
     // 이미지 사이즈 변경 메서드
     @Transactional
-    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int height) {
 
         try {
             BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
@@ -241,15 +241,15 @@ public class PicturesService {
             int originHeight = image.getHeight();
 
             // origin 이미지가 400보다 작으면 패스
-            if (originWidth < width)
+            if (originHeight < height)
                 return originalImage;
 
             MarvinImage imageMarvin = new MarvinImage(image);
 
             Scale scale = new Scale();
             scale.load();
-            scale.setAttribute("newWidth", width);
-            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
+            scale.setAttribute("newWidth", height * originWidth / originHeight); //비율유지를 위해 너비와 높이 비율 계산
+            scale.setAttribute("newHeight", height);
             scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
 
             BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();

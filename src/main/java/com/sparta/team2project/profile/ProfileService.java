@@ -87,7 +87,7 @@ public class ProfileService {
         String pictureContentType = file.getContentType();
         String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
         // 3. 이미지 사이즈 재조정
-        MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 250);
+        MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 50);
         Long pictureSize = resizedImage.getSize();  // 단위: KBytes
         // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
         ObjectMetadata metadata = new ObjectMetadata();
@@ -140,7 +140,7 @@ public class ProfileService {
             Scale scale = new Scale();
             scale.load();
             scale.setAttribute("newWidth", width);
-            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
+            scale.setAttribute("newHeight", width);//정사각형(너비 = 높이)으로 출력
             scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
 
             BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();

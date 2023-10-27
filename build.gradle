@@ -57,6 +57,7 @@ dependencies {
 	testImplementation 'org.testng:testng:7.1.0'
 //	testImplementation 'repository:junit:junit'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'junit:junit:4.13.1'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'

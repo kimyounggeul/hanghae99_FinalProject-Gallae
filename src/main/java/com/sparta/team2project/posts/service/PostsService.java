@@ -9,10 +9,6 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
-import com.sparta.team2project.pictures.dto.PicturesResponseDto;
-import com.sparta.team2project.pictures.dto.UploadResponseDto;
-import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.posts.dto.PostsPicturesResponseDto;
 import com.sparta.team2project.posts.dto.PostsPicturesUploadResponseDto;
 import com.sparta.team2project.posts.entity.PostsPictures;
@@ -24,8 +20,6 @@ import com.sparta.team2project.postslike.entity.PostsLike;
 import com.sparta.team2project.postslike.repository.PostsLikeRepository;
 import com.sparta.team2project.s3.AmazonS3ResourceStorage;
 import com.sparta.team2project.s3.CustomMultipartFile;
-import com.sparta.team2project.schedules.entity.Schedules;
-import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.tags.entity.Tags;
 import com.sparta.team2project.tags.repository.TagsRepository;
 import com.sparta.team2project.tripdate.entity.TripDate;
@@ -121,7 +115,7 @@ public class PostsService {
         for(Posts posts:postsPage){
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
             List<Tags> tag = tagsRepository.findByPosts(posts);
-            postResponseDtoList.add(new PostResponseDto(posts, tag, posts.getUsers(), commentNum));
+            postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers(), tag,commentNum));
         }
         return new SliceImpl<>(postResponseDtoList, pageable, postsPage.hasNext());
     }
@@ -294,7 +288,7 @@ public class PostsService {
         return postsRepository.findById(id).orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_EXIST));
     }
 
-    // 전체 게시글 관련 반환 시 사용 메서드
+    // 상위 랭킹 및 검색 조회한 게시글 관련 반환 시 사용 메서드
     private List<PostResponseDto> getPostResponseDto(List<Posts> postsList) {
         if (postsList.isEmpty()) {
             throw new CustomException(ErrorCode.POST_NOT_EXIST);
@@ -310,7 +304,7 @@ public class PostsService {
 
     // 사진 업로드 사이즈 조정 메서드
     @Transactional
-    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int height) {
 
         try {
             BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
@@ -319,15 +313,15 @@ public class PostsService {
             int originHeight = image.getHeight();
 
             // origin 이미지가 400보다 작으면 패스
-            if(originWidth < width)
+            if(originHeight < height)
                 return originalImage;
 
             MarvinImage imageMarvin = new MarvinImage(image);
 
             Scale scale = new Scale();
             scale.load();
-            scale.setAttribute("newWidth", width);
-            scale.setAttribute("newHeight", width * originHeight / originWidth);//비율유지를 위해 높이 유지
+            scale.setAttribute("newWidth", height * originWidth/originHeight); //비율유지를 위해 너비를 비율로 계산
+            scale.setAttribute("newHeight", height);
             scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
 
             BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
@@ -370,7 +364,7 @@ public class PostsService {
                     String postsPictureContentType = file.getContentType();
                     String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
                     // 2. 이미지 리사이즈 함수 호출
-                    MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
+                    MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 300);
                     Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
                     PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
                             postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);

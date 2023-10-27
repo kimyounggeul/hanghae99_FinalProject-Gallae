@@ -54,7 +54,6 @@ public class Schedules {
     private List<Pictures> picturesList = new ArrayList<>(3);
 
     public Schedules(TripDate tripDate, Schedules schedules) {
-
         this.tripDate = tripDate;
         this.schedulesCategory=schedules.getSchedulesCategory();
 //        this.endTime=schedules.getEndTime();

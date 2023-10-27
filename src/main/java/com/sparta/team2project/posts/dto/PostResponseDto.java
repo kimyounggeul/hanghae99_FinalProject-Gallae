@@ -26,6 +26,7 @@ public class PostResponseDto {
     private final String contents;
     private final String nickName;
     private final LocalDateTime createdAt;
+    private String profileImage;
     private List<String> tagsList;
     private Integer likeNum;
     private Integer viewNum;
@@ -37,13 +38,28 @@ public class PostResponseDto {
     private List<String> chosenDateList;
     private List<PostsPicturesResponseDto> postsPicturesList;
 
-     // 전체 게시글 관련 반환시
+     // 랭킹 게시물 조회 및 검색 조회로 게시글 반환시
     public PostResponseDto(Posts posts, List<Tags> tagsList,Users users,int commentNum){
         this.postId = posts.getId();
         this.title = posts.getTitle();
         this.tagsList = tagsList.stream().map(Tags::getPurpose).toList();
         this.contents = posts.getContents();
         this.nickName = users.getNickName();
+        this.likeNum = posts.getLikeNum();
+        this.viewNum =  posts.getViewNum();
+        this.commentNum = commentNum;
+        this.postCategory = posts.getPostCategory();
+        this.createdAt = posts.getCreatedAt();
+        this.postsPicturesList = postsPicturesToDto(posts.getPostsPicturesList());
+    }
+    // 전체 게시글 관련 반환시
+    public PostResponseDto(Posts posts, Users users,List<Tags> tagsList,int commentNum){
+        this.postId = posts.getId();
+        this.title = posts.getTitle();
+        this.tagsList = tagsList.stream().map(Tags::getPurpose).toList();
+        this.contents = posts.getContents();
+        this.nickName = users.getNickName();
+        this.profileImage = users.getProfileImg();
         this.likeNum = posts.getLikeNum();
         this.viewNum =  posts.getViewNum();
         this.commentNum = commentNum;
@@ -58,6 +74,7 @@ public class PostResponseDto {
         this.tagsList = tagsList.stream().map(Tags::getPurpose).toList();
         this.contents = posts.getContents();
         this.nickName = users.getNickName();
+        this.profileImage = users.getProfileImg();
         this.likeNum = posts.getLikeNum();
         this.viewNum =  posts.getViewNum();
         this.commentNum = commentNum;
