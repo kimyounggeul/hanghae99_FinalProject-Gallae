@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import java.util.TimeZone;
 
 @SpringBootApplication
-//@EnableJpaAuditing
+//@EnableJpaAuditing // 테스트할때 끄기
 public class Team2projectApplication {
 
 	// Bean 생명주기를 이용한 timezone 설정

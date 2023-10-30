@@ -12,21 +12,18 @@ import com.sparta.team2project.schedules.dto.CreateSchedulesRequestDto;
 import com.sparta.team2project.schedules.dto.SchedulesRequestDto;
 import com.sparta.team2project.schedules.dto.SchedulesResponseDto;
 import com.sparta.team2project.schedules.entity.Schedules;
-import com.sparta.team2project.schedules.entity.SchedulesCategory;
 import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.schedules.service.SchedulesService;
 import com.sparta.team2project.tripdate.entity.TripDate;
 import com.sparta.team2project.tripdate.repository.TripDateRepository;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

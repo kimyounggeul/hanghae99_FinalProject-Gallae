@@ -315,13 +315,15 @@ public class PostsServiceTest {
         CustomException exception = assertThrows(CustomException.class, () -> postsService.getKeywordPosts(keyword));
         assertEquals(ErrorCode.POST_NOT_EXIST, exception.getErrorCode());
     }
+
     @Test
     @DisplayName("좋아요 순으로 게시글 조회 Test") //수정
     public void testGetRankPosts() {
         // 가짜 게시물 데이터 생성
-        Posts post1 = MockPosts();
-        Posts post2 = MockPosts();
-        Posts post3 = MockPosts();
+        Posts post1 = new Posts("내용1", "제ex목1", PostCategory.가족, "부제목1", new Users());
+        Posts post2 = new Posts("내용2", "ex제목", PostCategory.가족, "부제목2", new Users());
+        Posts post3 = new Posts("내용3", "제목2ex", PostCategory.가족, "부제목3", new Users());
+
 
 
         // 좋아요 수 설정
@@ -343,7 +345,8 @@ public class PostsServiceTest {
         mockPostsList.add(post1);
         mockPostsList.add(post2);
         mockPostsList.add(post3);
-
+        mockPostsList.sort(Comparator.comparing(Posts::getLikeNum).reversed()
+                .thenComparing(Posts::getCreatedAt, Comparator.reverseOrder()));
 
         // PostsRepository의 동작 설정
         when(postsRepository.findTop3ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc())
@@ -480,16 +483,7 @@ public class PostsServiceTest {
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(java.util.Optional.of(user));
 
-        Users usersReturn = userRepository.findByEmail(user.getEmail()).orElseThrow(
-                () -> new CustomException(ErrorCode.ID_NOT_MATCH)
-        );
-
-
         when(postsRepository.findById(post.getId())).thenReturn(java.util.Optional.of(post));
-
-        Posts postsReturn = postsRepository.findById(post.getId()).orElseThrow(
-                () -> new CustomException(ErrorCode.POST_NOT_EXIST)
-        );
 
         UpdateRequestDto updateRequestDto = MockUpdateRequestDto();
 

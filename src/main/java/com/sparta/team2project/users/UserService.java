@@ -54,8 +54,8 @@ public class UserService {
         // 사용자 ROLE 확인
         UserRoleEnum userRole = UserRoleEnum.USER;
 
-        if (requestDto.getAdminToken() != null && ADMIN_TOKEN.equals(requestDto.getAdminToken())) {
-            userRole = UserRoleEnum.ADMIN; // adminToken이 제공되면 ADMIN으로 설정
+        if (requestDto.getAdminToken() != null && requestDto.getAdminToken().equals(ADMIN_TOKEN)) {
+            userRole = UserRoleEnum.ADMIN;
         }
         // 닉네임이 이미 있을 경우 예외처리
         if (userRepository.existsByNickName(requestDto.getNickName())) {
