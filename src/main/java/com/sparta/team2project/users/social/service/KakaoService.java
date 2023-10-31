@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import com.sparta.team2project.users.social.dto.KakaoUserInfoDto;

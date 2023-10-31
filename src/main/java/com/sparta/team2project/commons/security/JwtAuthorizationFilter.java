@@ -1,6 +1,6 @@
 package com.sparta.team2project.commons.security;
 
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

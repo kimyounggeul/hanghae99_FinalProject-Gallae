@@ -26,8 +26,6 @@ dependencies {
 	// Adobe S3Mock
 	testImplementation 'io.findify:s3mock_2.13:0.2.6'
 
-
-
 	// JUnit5
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
 
@@ -103,6 +101,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	//SpringBoot Security Test
 	testImplementation 'org.springframework.security:spring-security-test'
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 }
 

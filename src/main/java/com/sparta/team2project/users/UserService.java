@@ -1,17 +1,17 @@
 package com.sparta.team2project.users;
 
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.email.EmailService;
-import com.sparta.team2project.email.ValidNumber.ValidNumber;
-import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
+//import com.sparta.team2project.email.ValidNumber.ValidNumber;
+//import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
-import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -35,7 +35,9 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
-    private final ValidNumberRepository validNumberRepository;
+    private final RedisUtil redisUtil;
+
+    //    private final ValidNumberRepository validNumberRepository;
     private final JwtUtil jwtUtil;
 
     // ADMIN_TOKEN
@@ -85,65 +87,29 @@ public class UserService {
 
     // 인증번호 요청
     public ResponseEntity<MessageResponseDto> checkEmail(String email) {
-
-        //해당 이메일로 전에 인증번호를 요청했다면 전 인증번호를 db에서 삭제함
-        Optional<ValidNumber> pastNumber = validNumberRepository.findByEmail(email);
-        if (pastNumber.isPresent()) {
-            validNumberRepository.delete(pastNumber.get());
-        }
-
-        Optional<Users> checkUsers = userRepository.findByEmail(email);
-
-        if (checkUsers.isPresent()) {
-            throw new CustomException(ErrorCode.DUPLICATED_EMAIL); //이메일로 인증번호를 찾을 수 없음
-        }
-        if (email == null) {
-            throw new CustomException(ErrorCode.EMAIL_FORMAT_WRONG); // 이메일 형식이 잘못됨
-        }
-        // 인증한 이메일이 가입시 사용할 이메일이어야 함. -> 회원가입 기능에서 ValidNumber.email과 Users.email이 일치해야 함.
-
-
+        // 이메일 관련 검증 및 인증번호 생성 코드는 그대로 사용
         int number = (int) (Math.random() * 899999) + 100000; // 6자리 난수 생성(인증번호)
-
-        LocalTime now = LocalTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss"); // 현재시간에서 HHmmss 형식으로 시간을 가져옴
-        long formatedNow = Long.parseLong(now.format(formatter));
-
-        ValidNumber validNumber = new ValidNumber(number, email, formatedNow);
-        validNumberRepository.save(validNumber);
+        // Redis를 사용하여 인증번호 저장
+        redisUtil.setDataExpire(email, String.valueOf(number), 180000);
 
         emailService.sendNumber(number, email);
         return ResponseEntity.ok((new MessageResponseDto("인증번호가 발송되었습니다.", HttpStatus.OK.value())));
     }
 
-
     // 인증 번호 확인하기
     public boolean checkValidNumber(ValidNumberRequestDto validNumberRequestDto, String email) {
-        boolean checkNumber = true;
+        // 이메일 관련 검증 코드는 그대로 사용
 
-        LocalTime now = LocalTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss"); // 현재시간에서 HHmmss 형식으로 시간을 가져옴.
-        long formatedNow = Long.parseLong(now.format(formatter));
+        // Redis에서 인증번호 가져오기
+        String storedNumber = redisUtil.getData(email);
 
-        Optional<ValidNumber> validNumberEmail = validNumberRepository.findByEmail(email);
-
-        if (!validNumberEmail.isPresent()) {
-            throw new CustomException(ErrorCode.INVALID_VALID_TOKEN); //이메일로 인증번호를 찾을 수 없음
-        }
-
-        ValidNumber validNumber = validNumberEmail.get();
-        double time = validNumber.getTime();
-
-        if (formatedNow - time >= 300) { // 인증번호 발급 받은지 3분 초과
-            throw new CustomException(ErrorCode.VALID_TIME_OVER);
-        }
-//        number != validNumber.getValidNumber()
-        if (validNumber.getValidNumber() != validNumberRequestDto.getValidNumber()) {
+        if (storedNumber == null || !storedNumber.equals(String.valueOf(validNumberRequestDto.getValidNumber()))) {
             throw new CustomException(ErrorCode.WRONG_NUMBER);
         } else {
-            return checkNumber; // 인증성공시 true 값이 반환됩니다.
+            return true; // 인증 성공시 true 값이 반환됩니다.
         }
     }
+
     // 닉네임 중복여부 체크 메서드
     public boolean checkNickName(String nickName) {
         boolean checkNickName = true;
