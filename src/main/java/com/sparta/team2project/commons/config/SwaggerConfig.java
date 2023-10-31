@@ -30,7 +30,7 @@ public class SwaggerConfig {
                 .title("TEST")
                 .description("Api Description");
 
-        String access_token_header = JwtUtil.AUTHORIZATION_HEADER;
+        String access_token_header = JwtUtil.ACCESS_KEY;
 
 
         // 헤더에 security scheme 도 같이 보내게 만드는 것

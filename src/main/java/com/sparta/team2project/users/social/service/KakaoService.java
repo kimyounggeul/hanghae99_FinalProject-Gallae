@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,38 +45,26 @@ public class KakaoService {
 
     @Value("${kakaoClientId}")
     private String kakaoClientId;
-    @Value("${kakaoClientSecret}")
-    private String kakaoClientSecret;
+//    @Value("${kakaoClientSecret}")
+//    private String kakaoClientSecret;
     @Value("${kakaoRedirectUri}")
     private String kakaoRedirectUri;
 
-    public String[] kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
 
+    public String[] kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         String[] tokenArray = getToken(code);
-        // 1. "인가 코드"로 "액세스, refresh 토큰" 요청
         String kakaoAccessToken = tokenArray[0];
         String kakaoRefreshToken = tokenArray[1];
-        // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
-        // 3. 필요시에 회원가입
-        Users kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
-        // 4. JWT 토큰 반환
-        TokenDto tokenDto = jwtUtil.createAllToken(kakaoUser.getEmail(), kakaoUser.getUserRole());
-        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByEmail(kakaoUser.getEmail());
 
-        if (refreshToken.isPresent()) { //기존 회원
-            RefreshToken updateToken = refreshToken.get().updateToken(tokenDto.getRefreshToken().substring(7), kakaoAccessToken, kakaoRefreshToken);
-            refreshTokenRepository.save(updateToken);
-        } else { //새로운 회원
-            RefreshToken saveToken = new RefreshToken(tokenDto.getRefreshToken().substring(7), kakaoUser.getEmail(), kakaoAccessToken, kakaoRefreshToken);
-            refreshTokenRepository.save(saveToken);
-        }
+        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
+
+        Users kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
 
         String[] tokenArrayResult = new String[5];
-        tokenArrayResult[0] = tokenDto.getAccessToken();
-        tokenArrayResult[1] = tokenDto.getRefreshToken();
+        tokenArrayResult[0] = tokenArray[0];
+        tokenArrayResult[1] = tokenArray[1];
         tokenArrayResult[2] = kakaoUserInfo.getEmail();
-        tokenArrayResult[3]	=  kakaoUser.getNickName();
+        tokenArrayResult[3] = kakaoUser.getNickName();
 
         if (kakaoUser.getProfileImg() != null) {
             tokenArrayResult[4] = kakaoUser.getProfileImg();
@@ -83,7 +72,22 @@ public class KakaoService {
             tokenArrayResult[4] = null;
         }
 
+        updateRefreshToken(kakaoUser, kakaoAccessToken, kakaoRefreshToken);
+
         return tokenArrayResult;
+    }
+
+    private void updateRefreshToken(Users kakaoUser, String kakaoAccessToken, String kakaoRefreshToken) {
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByRefreshToken(kakaoUser.getEmail());
+        String tokenDto = jwtUtil.createAccessToken(kakaoUser.getEmail(), kakaoUser.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
+
+        if (refreshToken.isPresent()) { // 기존 회원
+            RefreshToken updateToken = refreshToken.get().updateToken(tokenDto.substring(7), kakaoAccessToken, kakaoRefreshToken); // 수정: tokenDto()를 tokenDto로 변경
+            refreshTokenRepository.save(updateToken);
+        } else { // 새로운 회원
+            RefreshToken saveToken = new RefreshToken(tokenDto.substring(7), kakaoUser.getEmail(), kakaoAccessToken, kakaoRefreshToken); // 수정: tokenDto()를 tokenDto로 변경
+            refreshTokenRepository.save(saveToken);
+        }
     }
 
     private String[] getToken(String code) throws JsonProcessingException {
@@ -103,7 +107,7 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", kakaoClientId);
-        body.add("client_secret", kakaoClientSecret);
+//        body.add("client_secret", kakaoClientSecret);
         body.add("redirect_uri", kakaoRedirectUri);
         body.add("code", code);
 

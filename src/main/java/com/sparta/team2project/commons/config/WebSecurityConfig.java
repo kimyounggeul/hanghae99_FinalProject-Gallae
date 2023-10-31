@@ -5,6 +5,7 @@ import com.sparta.team2project.commons.jwt.JwtUtil;
 
 import com.sparta.team2project.commons.security.JwtAuthorizationFilter;
 import com.sparta.team2project.commons.security.UserDetailsServiceImpl;
+import com.sparta.team2project.refreshToken.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +34,7 @@ public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
- //   private final AuthenticationConfiguration authenticationConfiguration;
+    private final RefreshTokenRepository RefreshTokenRepository;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -45,16 +46,10 @@ public class WebSecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-//    @Bean
-//    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-//        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil);
-//        filter.setAuthenticationManager(authenticationManager(authenticationConfiguration));
-//        return filter;
-//    }
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, userDetailsService);
+        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, RefreshTokenRepository);
     }
 
     //Cors
@@ -95,6 +90,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll() // resources 접근 허용 설정
                                 .requestMatchers("/").permitAll() // 메인 페이지 요청 허가
                                 .requestMatchers("/api/users/**").permitAll()
+                                .requestMatchers("/api/token/refreshAccessToken").permitAll()
                                 // 조회기능은 누구나 가능합니다!
                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()

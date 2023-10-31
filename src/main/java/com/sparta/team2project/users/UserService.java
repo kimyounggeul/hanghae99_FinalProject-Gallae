@@ -36,10 +36,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
-    private final EmailService emailService;
     private final ValidNumberRepository validNumberRepository;
-    private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
+    private final JwtUtil jwtUtil;
 
 
     // ADMIN_TOKEN
@@ -164,21 +164,26 @@ public class UserService {
         Users users = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(() ->
                 new CustomException(ErrorCode.ID_NOT_FOUND)); // 이메일 여부 확인
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
-            throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비번이 맞는지 확인
+            throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비밀번호가 일치하지 않음
         }
-        TokenDto tokenDto = jwtUtil.createAllToken(users.getEmail(), users.getUserRole());
-        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByEmail(requestDto.getEmail());
+        // 로그인 성공 시 액세스 토큰 및 리프레시 토큰 생성
+        String accessToken = jwtUtil.createAccessToken(users.getEmail(), users.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
+        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
+        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
 
-        if(refreshToken.isPresent()) {
-            RefreshToken updateToken = refreshToken.get().updateToken(tokenDto.getRefreshToken().substring(7));
+        if (findRefreshToken.isPresent()) {
+            RefreshToken existingToken = findRefreshToken.get();
+            RefreshToken updateToken = existingToken.updateToken(refreshToken);
             refreshTokenRepository.save(updateToken);
         } else {
-            RefreshToken newToken = new RefreshToken(tokenDto.getRefreshToken().substring(7), requestDto.getEmail());
+            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
             refreshTokenRepository.save(newToken);
         }
 
-        response.addHeader(jwtUtil.ACCESS_KEY, tokenDto.getAccessToken());
-        response.addHeader(jwtUtil.REFRESH_KEY, tokenDto.getRefreshToken());
+        response.addHeader(JwtUtil.ACCESS_KEY, accessToken);
+        // 수정: 리프레시 토큰을 다시 생성하지 않고 기존 리프레시 토큰을 사용하도록 변경
+        response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
+
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
     }
 }

@@ -41,7 +41,9 @@ public enum ErrorCode {
     CURRENT_PASSWORD_NOT_MATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다."),
     SAME_PASSWORD(HttpStatus.BAD_REQUEST, "현재 비밀번호와 동일한 비밀번호 입니다."),
     EXPIRED_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "만료된 액세스토큰 입니다"),
-    EXPIRED_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "만료된 리프레시토큰 입니다.");
+    EXPIRED_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "만료된 리프레시토큰 입니다."),
+    NOT_ALLOWED_TOKEN(HttpStatus.BAD_REQUEST, "지원하지 않는 토큰 형식입니다."),
+    WRONG_TOKEN(HttpStatus.BAD_REQUEST, "잘못된 토큰입니다.");
 
 
 

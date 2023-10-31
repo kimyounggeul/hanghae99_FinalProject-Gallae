@@ -1,16 +1,15 @@
 package com.sparta.team2project.refreshToken;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Entity
 @Getter
-@NoArgsConstructor
-@Setter
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 public class RefreshToken {
 
     @Id
@@ -54,5 +53,4 @@ public class RefreshToken {
         this.kakaoRefreshToken = kakaoRefreshToken;
         return this;
     }
-
 }
