@@ -3,10 +3,6 @@ package com.sparta.team2project.schedules.dto;
 import com.sparta.team2project.schedules.entity.SchedulesCategory;
 import lombok.Getter;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
 @Getter
 public class SchedulesRequestDto {
 //    private LocalDate chosenDate;
@@ -19,4 +15,6 @@ public class SchedulesRequestDto {
 //    private LocalTime endTime;
     private String timeSpent;
     private String referenceURL;
+    private String x;
+    private String y;
 }

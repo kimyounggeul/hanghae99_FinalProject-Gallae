@@ -5,10 +5,6 @@ import com.sparta.team2project.schedules.entity.SchedulesCategory;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
 @Getter
 @RequiredArgsConstructor
 public class SchedulesResponseDto {
@@ -23,6 +19,8 @@ public class SchedulesResponseDto {
     //    private LocalTime startTime;
 //    private LocalTime endTime;
     private String referenceURL;
+    private String x;
+    private String y;
 
     public SchedulesResponseDto(Schedules schedules){
         this.schedulesId = schedules.getId();
@@ -36,5 +34,7 @@ public class SchedulesResponseDto {
 //        this.endTime = schedules.getEndTime();
         this.timeSpent = schedules.getTimeSpent();
         this.referenceURL = schedules.getReferenceURL();
+        this.x = schedules.getX();
+        this.y = schedules.getY();
     }
 }

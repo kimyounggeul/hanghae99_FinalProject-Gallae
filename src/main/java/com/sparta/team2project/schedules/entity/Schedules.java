@@ -2,16 +2,12 @@ package com.sparta.team2project.schedules.entity;
 
 import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.schedules.dto.SchedulesRequestDto;
-import com.sparta.team2project.schedules.dto.SchedulesResponseDto;
 import com.sparta.team2project.tripdate.entity.TripDate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -43,6 +39,12 @@ public class Schedules {
     @Column(name = "referenceURL", nullable = true)
     private String referenceURL;
 
+    @Column(name = "x", nullable = false)
+    private String x;
+
+    @Column(name = "y", nullable = false)
+    private String y;
+
     // 날짜별 여행계획(TripDate)와 양방향 관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="tripDate_id")
@@ -65,6 +67,8 @@ public class Schedules {
 //        this.details= schedules.getDetails();
         this.referenceURL = schedules.getReferenceURL();
         this.picturesList = schedules.getPicturesList();
+        this.x = schedules.getX();
+        this.y = schedules.getY();
     }
 
     public Schedules(TripDate tripDate, SchedulesRequestDto requestDto){
@@ -78,6 +82,8 @@ public class Schedules {
         this.placeName=requestDto.getPlaceName();
 //        this.details= schedules.getDetails();
         this.referenceURL = requestDto.getReferenceURL();
+        this.x = requestDto.getX();
+        this.y = requestDto.getY();
     }
 
     // DTO로 직접 업데이트
@@ -92,5 +98,7 @@ public class Schedules {
         this.placeName = requestDto.getPlaceName();
 //        this.details = requestDto.getDetails();
         this.referenceURL = requestDto.getReferenceURL();
+        this.x = requestDto.getX();
+        this.y = requestDto.getY();
     }
 }

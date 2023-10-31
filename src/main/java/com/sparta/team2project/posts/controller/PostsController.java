@@ -1,20 +1,8 @@
 package com.sparta.team2project.posts.controller;
 
 import com.sparta.team2project.commons.dto.MessageResponseDto;
-import com.sparta.team2project.commons.exceptionhandler.CustomException;
-import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
-
-import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
-import com.sparta.team2project.pictures.dto.PicturesResponseDto;
-import com.sparta.team2project.pictures.dto.UploadResponseDto;
-import com.sparta.team2project.posts.dto.PostMessageResponseDto;
-import com.sparta.team2project.posts.dto.PostResponseDto;
-import com.sparta.team2project.posts.dto.TotalRequestDto;
-import com.sparta.team2project.posts.dto.UpdateRequestDto;
-
 import com.sparta.team2project.posts.dto.*;
-
 import com.sparta.team2project.posts.service.PostsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -106,19 +94,13 @@ public class PostsController {
 
     // 사진 등록 API 메서드
     @PostMapping("/posts/{postId}/postsPictures")
-    public PostsPicturesUploadResponseDto uploadPictures(@PathVariable("postId") Long postId,
-                                            @RequestPart("file") List<MultipartFile> files,
+    public String uploadPostsPictures(@PathVariable("postId") Long postId,
+                                            @RequestParam("file") MultipartFile file,
                                             @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
-        // 업로드할 사진이 3개를 초과하면 예외 출력
-        if(files.size() > 3){
-            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
-        }
-        // 그 외의 경우 업로드 수행
-        else{
-            return postsService.uploadPostsPictures(postId, files, userDetails.getUsers());
-        }
+            return postsService.uploadPostsPictures(postId, file, userDetails.getUsers());
     }
+    @PostMapping("/")
 
     @GetMapping("/posts/{postId}/postsPictures")
     public PostsPicturesUploadResponseDto getPostsPictures(@PathVariable("postId") Long postId){
@@ -126,12 +108,12 @@ public class PostsController {
     }
 
     @GetMapping("/postsPictures/{postsPicturesId}")
-    public PostsPicturesResponseDto getPostsPicture(@PathVariable("postsPicturesId") Long postsPicturesId){
+    public String getPostsPicture(@PathVariable("postsPicturesId") Long postsPicturesId){
         return postsService.getPostsPicture(postsPicturesId);
     }
 
     @PutMapping("/postsPictures/{postsPicturesId}")
-    public PostsPicturesMessageResponseDto updatePictures(@PathVariable("postsPicturesId") Long postsPicturesId,
+    public String updatePictures(@PathVariable("postsPicturesId") Long postsPicturesId,
                                                      @RequestParam("file") MultipartFile file,
                                                      @AuthenticationPrincipal UserDetailsImpl userDetails
     ){

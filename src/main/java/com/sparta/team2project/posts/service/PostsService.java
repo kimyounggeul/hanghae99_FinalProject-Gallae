@@ -66,7 +66,7 @@ public class PostsService {
     private String bucket;
 
     // 게시글 생성
-    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto,Users users) {
+    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto, Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
 
@@ -84,12 +84,12 @@ public class PostsService {
 
         List<Long> idList = new ArrayList<>();// tripDateID 담는 리스트
         List<TripDateOnlyRequestDto> tripDateRequestDtoList = totalRequestDto.getTripDateList();
-        for(TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList){
-            TripDate tripDate = new TripDate(tripDateRequestDto,posts);
+        for (TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList) {
+            TripDate tripDate = new TripDate(tripDateRequestDto, posts);
             tripDateRepository.save(tripDate); // tripDate 저장
             idList.add(tripDate.getId());
         }
-        return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK,posts,idList);
+        return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK, posts, idList);
     }
 
     // 단일 게시물 조회
@@ -102,20 +102,20 @@ public class PostsService {
 
         List<Tags> tags = tagsRepository.findByPosts(posts); // 해당 게시물 관련 태그 조회
 
-        return new PostResponseDto(posts,posts.getUsers(),tags,commentNum,posts.getModifiedAt());
+        return new PostResponseDto(posts, posts.getUsers(), tags, commentNum, posts.getModifiedAt());
     }
 
     // 게시글 전체 조회
-    public Slice<PostResponseDto> getAllPosts(int page,int size) {
+    public Slice<PostResponseDto> getAllPosts(int page, int size) {
 
-        Pageable pageable = PageRequest.of(page,size);
+        Pageable pageable = PageRequest.of(page, size);
         Page<Posts> postsPage = postsRepository.findAllPosts(pageable);
 
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
-        for(Posts posts:postsPage){
+        for (Posts posts : postsPage) {
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
             List<Tags> tag = tagsRepository.findByPosts(posts);
-            postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers(), tag,commentNum));
+            postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers(), tag, commentNum));
         }
         return new SliceImpl<>(postResponseDtoList, pageable, postsPage.hasNext());
     }
@@ -130,20 +130,20 @@ public class PostsService {
 
         for (Posts posts : postsList) {
 
-                int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
+            int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
 
-                List<Tags> tags = tagsRepository.findByPosts(posts);
-                List<TripDate> tripDateList = tripDateRepository.findByPosts(posts);
+            List<Tags> tags = tagsRepository.findByPosts(posts);
+            List<TripDate> tripDateList = tripDateRepository.findByPosts(posts);
 
-                postResponseDtoList.add(new PostResponseDto(posts, tags, posts.getUsers(), commentNum, tripDateList));
+            postResponseDtoList.add(new PostResponseDto(posts, tags, posts.getUsers(), commentNum, tripDateList));
         }
         return postResponseDtoList;
     }
 
     // 키워드 검색
-    public List<PostResponseDto> getKeywordPosts(String keyword){
+    public List<PostResponseDto> getKeywordPosts(String keyword) {
 
-        if(keyword==null || keyword.isEmpty()){ // 키워드가 null값인 경우
+        if (keyword == null || keyword.isEmpty()) { // 키워드가 null값인 경우
             throw new CustomException(ErrorCode.POST_NOT_SEARCH);
         }
 
@@ -172,17 +172,17 @@ public class PostsService {
     }
 
     // 사용자가 좋아요 누른 게시물 조회
-    public Page<PostResponseDto> getUserLikePosts(Users users,int page,int size) {
+    public Page<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page,size);
+        Pageable pageable = PageRequest.of(page, size);
         Users existUser = checkUser(users); // 사용자 조회
-        Page<Posts> postsPage = postsRepository.findUsersLikePosts(existUser,pageable);
+        Page<Posts> postsPage = postsRepository.findUsersLikePosts(existUser, pageable);
 
         if (postsPage.isEmpty()) {
             throw new CustomException(ErrorCode.POST_NOT_EXIST);
         }
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
-        for(Posts posts:postsPage){
+        for (Posts posts : postsPage) {
             postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
         }
         return new PageImpl<>(postResponseDtoList, pageable, postsPage.getTotalElements());
@@ -201,54 +201,52 @@ public class PostsService {
     }
 
     // 게시글 좋아요 및 좋아요 취소
-    public LikeResponseDto like(Long id, Users users){
+    public LikeResponseDto like(Long id, Users users) {
         Posts posts = checkPosts(id); // 게시글 조회
 
         Users existUser = checkUser(users); // 사용자 조회
 
-        PostsLike overlap = postsLikeRepository.findByPostsAndUsers(posts,existUser);
-        if(overlap!=null){
+        PostsLike overlap = postsLikeRepository.findByPostsAndUsers(posts, existUser);
+        if (overlap != null) {
             postsLikeRepository.delete(overlap); // 좋아요 삭제
             posts.unlike(); // 해당 게시물 좋아요 취소시키는 메서드
-            return new LikeResponseDto("좋아요 취소",HttpServletResponse.SC_OK,false);
-        }
-        else{
-            PostsLike postsLike = new PostsLike(posts,existUser);
+            return new LikeResponseDto("좋아요 취소", HttpServletResponse.SC_OK, false);
+        } else {
+            PostsLike postsLike = new PostsLike(posts, existUser);
             postsLikeRepository.save(postsLike); // 좋아요 저장
             posts.like(); // 해당 게시물 좋아요수 증가시키는 메서드
-            return new LikeResponseDto("좋아요 확인",HttpServletResponse.SC_OK,true);
+            return new LikeResponseDto("좋아요 확인", HttpServletResponse.SC_OK, true);
         }
     }
 
     // 게시글 수정
-    public MessageResponseDto updatePost(Long postId, UpdateRequestDto updateRequestDto,Users users) {
+    public MessageResponseDto updatePost(Long postId, UpdateRequestDto updateRequestDto, Users users) {
         Posts posts = checkPosts(postId); // 게시글 조회
         Users existUser = checkUser(users); // 사용자 조회
-        checkAuthority(existUser,posts.getUsers()); //권한 확인 (ROLE 확인 및 게시글 사용자 id와 토큰에서 가져온 사용자 id 일치 여부 확인)
+        checkAuthority(existUser, posts.getUsers()); //권한 확인 (ROLE 확인 및 게시글 사용자 id와 토큰에서 가져온 사용자 id 일치 여부 확인)
 
         if (posts.getContents() != null && posts.getTitle() != null) { // 이미 게시글 등록이 완료 된 경우
 
             posts.update(updateRequestDto); // 게시글 수정
-        }
-        else{
+        } else {
             LocalDateTime time = LocalDateTime.now(); // 게시글 등록할 때의 시간
-            posts.updateTime(updateRequestDto,time); // null 값인 부분 채워줌으로써 게시글 등록
+            posts.updateTime(updateRequestDto, time); // null 값인 부분 채워줌으로써 게시글 등록
         }
         List<Tags> tagList = tagsRepository.findByPosts(posts); // 기존 게시물 태그 삭제
         tagsRepository.deleteAll(tagList);
 
-        List<String> tagsList=updateRequestDto.getTagsList();
+        List<String> tagsList = updateRequestDto.getTagsList();
         tagsList.stream()
                 .map(tag -> new Tags(tag, posts))
                 .forEach(tagsRepository::save); // 수정된 tags 저장
-        return new MessageResponseDto("수정 되었습니다.",HttpServletResponse.SC_OK);
+        return new MessageResponseDto("수정 되었습니다.", HttpServletResponse.SC_OK);
     }
 
     // 해당 게시물 삭제
-    public MessageResponseDto deletePost(Long postId, Users users){
+    public MessageResponseDto deletePost(Long postId, Users users) {
         Posts posts = checkPosts(postId); // 게시글 조회
         Users existUser = checkUser(users); // 사용자 조회
-        checkAuthority(existUser,posts.getUsers()); //권한 확인(ROLE 확인 및 게시글 사용자 id와 토큰에서 가져온 사용자 id 일치 여부 확인)
+        checkAuthority(existUser, posts.getUsers()); //권한 확인(ROLE 확인 및 게시글 사용자 id와 토큰에서 가져온 사용자 id 일치 여부 확인)
 
         // 연관된 댓글 삭제(orphanRemoval기능:자동으로 대댓글 삭제)
         List<Comments> commentsList = commentsRepository.findByPosts(posts);
@@ -267,19 +265,20 @@ public class PostsService {
         tripDateRepository.deleteAll(tripDateList);
 
         postsRepository.delete(posts); // 게시글 삭제
-        return new MessageResponseDto("삭제 되었습니다.",HttpServletResponse.SC_OK);
+        return new MessageResponseDto("삭제 되었습니다.", HttpServletResponse.SC_OK);
     }
 
     // 사용자 조회 메서드
-    private Users checkUser (Users users) {
+    private Users checkUser(Users users) {
         return usersRepository.findByEmail(users.getEmail()).
                 orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_MATCH));
 
     }
 
     // ADMIN 권한 및 이메일 일치여부 메서드
-    public void checkAuthority(Users existUser, Users users){
-        if (!existUser.getUserRole().equals(UserRoleEnum.ADMIN)&&!existUser.getEmail().equals(users.getEmail())) {throw new CustomException(ErrorCode.NOT_ALLOWED);
+    public void checkAuthority(Users existUser, Users users) {
+        if (!existUser.getUserRole().equals(UserRoleEnum.ADMIN) && !existUser.getEmail().equals(users.getEmail())) {
+            throw new CustomException(ErrorCode.NOT_ALLOWED);
         }
     }
 
@@ -294,7 +293,7 @@ public class PostsService {
             throw new CustomException(ErrorCode.POST_NOT_EXIST);
         }
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
-        for(Posts posts:postsList){
+        for (Posts posts : postsList) {
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
             List<Tags> tag = tagsRepository.findByPosts(posts);
             postResponseDtoList.add(new PostResponseDto(posts, tag, posts.getUsers(), commentNum));
@@ -313,14 +312,14 @@ public class PostsService {
             int originHeight = image.getHeight();
 
             // origin 이미지가 400보다 작으면 패스
-            if(originHeight < height)
+            if (originHeight < height)
                 return originalImage;
 
             MarvinImage imageMarvin = new MarvinImage(image);
 
             Scale scale = new Scale();
             scale.load();
-            scale.setAttribute("newWidth", height * originWidth/originHeight); //비율유지를 위해 너비를 비율로 계산
+            scale.setAttribute("newWidth", height * originWidth / originHeight); //비율유지를 위해 너비를 비율로 계산
             scale.setAttribute("newHeight", height);
             scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
 
@@ -329,7 +328,7 @@ public class PostsService {
             ImageIO.write(imageNoAlpha, fileFormat, baos);
             baos.flush();
 
-            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
+            return new CustomMultipartFile(fileName, fileFormat, originalImage.getContentType(), baos.toByteArray());
 
         } catch (IOException e) {
             throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);
@@ -338,7 +337,7 @@ public class PostsService {
 
     // 게시글 사진 업로드 API
     @SneakyThrows
-    public PostsPicturesUploadResponseDto uploadPostsPictures(Long postId, List<MultipartFile> files, Users users) {
+    public String uploadPostsPictures(Long postId, MultipartFile file, Users users) {
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users);         // 권한 확인
         // 기 존재하는 사진이 있는지 확인
@@ -351,47 +350,37 @@ public class PostsService {
             throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
         }
         // 이미 입력된 사진 + 새로 입력할 사진이 3개를 초과하면 예외처리
-        else if (files.size() + checkPostsPicturesList.size() > 3) {
-            throw new CustomException(ErrorCode.EXCEED_PICTURES_LIMIT);
-        }
-        else{
-            List<PostsPicturesResponseDto> postsPicturesResponseDtoList = new ArrayList<>();
+        else {
             // 1. 파일 정보를 picturesResponseDtoList에 저장
-            for (MultipartFile file: files) {
-                // 해당 위치의 파일 이름이 null값이면 사진 등록 작업 수행
-                    String postsPicturesName = file.getOriginalFilename();
-                    String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
-                    String postsPictureContentType = file.getContentType();
-                    String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
-                    // 2. 이미지 리사이즈 함수 호출
-                    MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 300);
-                    Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
-                    PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
-                            postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
-                    postsPicturesResponseDtoList.add(postsPicturesResponseDto);
-                    // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
-                    Posts posts = postsRepository.findById(postId).orElseThrow(
-                            () -> new CustomException(ErrorCode.ID_NOT_MATCH)
-                    );
-                    // 4. 기 존재하는 PostsPictures의 null값들을 업데이트
-                    PostsPictures postsPictures = new PostsPictures(posts, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
-                    checkPostsPicturesList.add(postsPictures);
-                    // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
-                    ObjectMetadata metadata = new ObjectMetadata();
-                    metadata.setContentType(resizedImage.getContentType());
-                    metadata.setContentLength(resizedImage.getSize());
-                    try (InputStream inputStream = resizedImage.getInputStream()) {
-                        amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
-                                .withCannedAcl(CannedAccessControlList.PublicRead));
-                    } catch (IOException e) {
-                        throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
-                    }
+            // 해당 위치의 파일 이름이 null값이면 사진 등록 작업 수행
+            String postsPicturesName = file.getOriginalFilename();
+            String postsPicturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "postsPictures" + "/" + postsPicturesName;
+            String postsPictureContentType = file.getContentType();
+            String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
+            // 2. 이미지 리사이즈 함수 호출
+            MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 300);
+            Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+            // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
+            Posts posts = postsRepository.findById(postId).orElseThrow(
+                    () -> new CustomException(ErrorCode.ID_NOT_MATCH)
+            );
+            // 4. 기 존재하는 PostsPictures의 null값들을 업데이트
+            PostsPictures postsPictures = new PostsPictures(posts, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
+            checkPostsPicturesList.add(postsPictures);
+            // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(resizedImage.getContentType());
+            metadata.setContentLength(resizedImage.getSize());
+            try (InputStream inputStream = resizedImage.getInputStream()) {
+                amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
+                        .withCannedAcl(CannedAccessControlList.PublicRead));
+            } catch (IOException e) {
+                throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
             }
+
             // 4. Repository에 Pictures리스트를 저장
-            postsPicturesRepository.saveAll(checkPostsPicturesList);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
-            MessageResponseDto messageResponseDto = new MessageResponseDto("아래 파일들이 등록되었습니다.", 200);
-            PostsPicturesUploadResponseDto postsPicturesUploadResponseDto = new PostsPicturesUploadResponseDto(postsPicturesResponseDtoList, messageResponseDto);
-            return postsPicturesUploadResponseDto;
+            postsPicturesRepository.save(postsPictures);// 5. 성공 메시지 DTO와 함께 picturesResponseDtoList를 반환
+            return postsPicturesURL;
         }
     }
 
@@ -433,7 +422,7 @@ public class PostsService {
         return postsPicturesUploadResponseDto;
     }
 
-    public PostsPicturesResponseDto getPostsPicture(Long postsPicturesId) {
+    public String getPostsPicture(Long postsPicturesId) {
         try {
             // 1. 파일을 찾아 열기
             PostsPictures postsPictures = postsPicturesRepository.findById(postsPicturesId).orElseThrow(
@@ -450,7 +439,7 @@ public class PostsService {
             s3ObjectInputStream.close();
             fileOutputStream.close();
             // 2. 사진 파일 정보(Pictures) 반환
-            return new PostsPicturesResponseDto(postsPictures);
+            return postsPictures.getPostsPicturesURL();
         } catch (AmazonServiceException e) {
             throw new AmazonServiceException(e.getErrorMessage());
         } catch (FileNotFoundException e) {
@@ -460,7 +449,7 @@ public class PostsService {
         }
     }
 
-    public PostsPicturesMessageResponseDto updatePictures(Long postsPicturesId, MultipartFile file, Users users) {
+    public String updatePictures(Long postsPicturesId, MultipartFile file, Users users) {
         Users existUser = checkUser(users); // 유저 확인
         checkAuthority(existUser, users);         // 권한 확인
         PostsPictures postsPictures = postsPicturesRepository.findById(postsPicturesId).orElseThrow(
@@ -473,9 +462,6 @@ public class PostsService {
         // 2. 이미지 사이즈 재조정
         MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
         Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
-        Long postId = postsPictures.getPosts().getId();
-        PostsPicturesResponseDto postsPicturesResponseDto = new PostsPicturesResponseDto(
-                postId, postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
         postsPictures.updatePostsPictures(postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
         postsPicturesRepository.save(postsPictures);
         // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
@@ -488,9 +474,9 @@ public class PostsService {
         } catch (IOException e) {
             throw new CustomException(ErrorCode.S3_NOT_UPLOAD);
         }
-        MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
-        PostsPicturesMessageResponseDto postsPicturesMessageResponseDto = new PostsPicturesMessageResponseDto(postsPicturesResponseDto, messageResponseDto);
-        return postsPicturesMessageResponseDto;
+//        MessageResponseDto messageResponseDto = new MessageResponseDto("사진이 업데이트 되었습니다.", 200);
+//        PostsPicturesMessageResponseDto postsPicturesMessageResponseDto = new PostsPicturesMessageResponseDto(postsPicturesResponseDto, messageResponseDto);
+        return postsPicturesURL;
     }
 
     public MessageResponseDto deletePictures(Long postsPicturesId, Users users) {

@@ -1,6 +1,5 @@
 package com.sparta.team2project.posts.entity;
 
-import com.sparta.team2project.schedules.entity.Schedules;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
