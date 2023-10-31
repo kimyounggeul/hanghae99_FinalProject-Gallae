@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.jwt.JwtUtil;
-import com.sparta.team2project.refreshToken.RefreshToken;
-import com.sparta.team2project.refreshToken.RefreshTokenRepository;
+import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import com.sparta.team2project.users.social.dto.KakaoUserInfoDto;
-import com.sparta.team2project.refreshToken.TokenDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +25,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j(topic = "Kakao Login")
@@ -40,57 +36,30 @@ public class KakaoService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
     private final JwtUtil jwtUtil;
-    private final RefreshTokenRepository refreshTokenRepository;
-
 
     @Value("${kakaoClientId}")
     private String kakaoClientId;
-//    @Value("${kakaoClientSecret}")
-//    private String kakaoClientSecret;
     @Value("${kakaoRedirectUri}")
     private String kakaoRedirectUri;
 
-
-    public String[] kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
-        String[] tokenArray = getToken(code);
-        String kakaoAccessToken = tokenArray[0];
-        String kakaoRefreshToken = tokenArray[1];
-
-        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(kakaoAccessToken);
-
+    public TokenDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+        // 1. "인가 코드"로 "액세스 토큰" 요청
+        String accessAuthorizationToken = getToken(code);
+        // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
+        KakaoUserInfoDto kakaoUserInfo = getKakaoUserInfo(accessAuthorizationToken);
+        // 3. 필요시에 회원가입
         Users kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
+        // 4. JWT 토큰 반환
+        String accessToken = jwtUtil.createAccessToken(kakaoUser.getEmail(), kakaoUser.getUserRole());
+//        String refreshToken = jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getUserRole()); // 리프레시 토큰 추가
 
-        String[] tokenArrayResult = new String[5];
-        tokenArrayResult[0] = tokenArray[0];
-        tokenArrayResult[1] = tokenArray[1];
-        tokenArrayResult[2] = kakaoUserInfo.getEmail();
-        tokenArrayResult[3] = kakaoUser.getNickName();
+        response.setHeader(JwtUtil.ACCESS_KEY, accessToken);
+//        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken);
 
-        if (kakaoUser.getProfileImg() != null) {
-            tokenArrayResult[4] = kakaoUser.getProfileImg();
-        } else {
-            tokenArrayResult[4] = null;
-        }
-
-        updateRefreshToken(kakaoUser, kakaoAccessToken, kakaoRefreshToken);
-
-        return tokenArrayResult;
+        return new TokenDto(accessToken);
     }
 
-    private void updateRefreshToken(Users kakaoUser, String kakaoAccessToken, String kakaoRefreshToken) {
-        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByRefreshToken(kakaoUser.getEmail());
-        String tokenDto = jwtUtil.createAccessToken(kakaoUser.getEmail(), kakaoUser.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
-
-        if (refreshToken.isPresent()) { // 기존 회원
-            RefreshToken updateToken = refreshToken.get().updateToken(tokenDto.substring(7), kakaoAccessToken, kakaoRefreshToken); // 수정: tokenDto()를 tokenDto로 변경
-            refreshTokenRepository.save(updateToken);
-        } else { // 새로운 회원
-            RefreshToken saveToken = new RefreshToken(tokenDto.substring(7), kakaoUser.getEmail(), kakaoAccessToken, kakaoRefreshToken); // 수정: tokenDto()를 tokenDto로 변경
-            refreshTokenRepository.save(saveToken);
-        }
-    }
-
-    private String[] getToken(String code) throws JsonProcessingException {
+    private String getToken(String code) throws JsonProcessingException {
         // 요청 URL 만들기
         URI uri = UriComponentsBuilder
                 .fromUriString("https://kauth.kakao.com")
@@ -107,7 +76,6 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", kakaoClientId);
-//        body.add("client_secret", kakaoClientSecret);
         body.add("redirect_uri", kakaoRedirectUri);
         body.add("code", code);
 
@@ -123,15 +91,8 @@ public class KakaoService {
         );
 
         // HTTP 응답 (JSON) -> 액세스 토큰 파싱
-        String responseBody = response.getBody();
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
-
-        String[] tokenArray = new String[2];
-        tokenArray[0] = jsonNode.get("access_token").asText();
-        tokenArray[1] = jsonNode.get("refresh_token").asText();
-
-        return tokenArray;
+        JsonNode jsonNode = new ObjectMapper().readTree(response.getBody());
+        return jsonNode.get("access_token").asText();
     }
 
     private KakaoUserInfoDto getKakaoUserInfo(String accessToken) throws JsonProcessingException {

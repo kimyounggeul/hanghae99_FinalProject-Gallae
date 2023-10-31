@@ -52,7 +52,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     } else {
                         // Refresh Token도 만료되었거나 유효하지 않을 경우, 인증 실패 처리
                         res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        log.info("Token이 만료되었습니다.");
+                        log.info("RefreshToken이 만료되었습니다.");
                     }
                 } else {
                     Claims accessTokenInfo = jwtUtil.getUserInfoFromToken(accessToken);

@@ -23,9 +23,9 @@ import java.util.Date;
 public class JwtUtil {
     public static final String ACCESS_KEY = "Authorization";
     public static final String REFRESH_KEY = "Authorization_refresh";
-    public static final String BEARER_PREFIX = "Bearer";
-    private final long ACCESS_TOKEN_TIME = 30 * 1000L; //1분
-    private final long REFRESH_TOKEN_TIME = 7 * 24 * 60 * 60 * 1000L;
+    public static final String BEARER_PREFIX = "Bearer ";
+    private final long ACCESS_TOKEN_TIME = 60 * 60 * 1000L; //1시간
+    private final long REFRESH_TOKEN_TIME = 2 * 7 * 24 * 60 * 60 * 1000L; //2주
 
     @Value("${jwt.secret.key}")
     private String secretKey;
@@ -42,7 +42,7 @@ public class JwtUtil {
     public String createToken(String email, UserRoleEnum userRole, long tokenTime) {
         Date date = new Date();
 
-        return BEARER_PREFIX +
+        return
                 Jwts.builder()
                         .setSubject(email)
                         .claim("userRole", userRole)
@@ -52,7 +52,7 @@ public class JwtUtil {
                         .compact();
     }
     public String createAccessToken(String email, UserRoleEnum userRole) {
-        return createToken(email, userRole, ACCESS_TOKEN_TIME);
+        return BEARER_PREFIX + createToken(email, userRole, ACCESS_TOKEN_TIME);
     }
 
     public String createRefreshToken(String email, UserRoleEnum userRole) {

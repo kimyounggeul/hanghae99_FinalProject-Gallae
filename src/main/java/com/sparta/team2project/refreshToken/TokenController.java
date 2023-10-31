@@ -34,7 +34,7 @@ public class TokenController {
                 String newAccessToken = jwtUtil.createAccessToken(email, userRole);
 
                 // 새로운 액세스 토큰 반환
-                return new ResponseEntity<>(new TokenDto(newAccessToken), HttpStatus.OK);
+                return new ResponseEntity<>(new TokenDto(newAccessToken, refreshToken), HttpStatus.OK);
             } else {
                 // 리프레시 토큰이 유효하지 않을 때의 처리
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
