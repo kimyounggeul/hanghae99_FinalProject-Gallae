@@ -11,15 +11,17 @@ import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
+import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,22 +42,29 @@ public class CommentsService {
 
         return new MessageResponseDto ("댓글을 작성하였습니다", 200);
     }
+
     // 댓글 조회
     public Slice<CommentsResponseDto> commentsList(Long postId,
                                                    Pageable pageable) {
 
+        Posts posts = postsRepository.findById(postId).orElseThrow(
+                () -> new CustomException(ErrorCode.POST_NOT_EXIST)); // 존재하지 않는 게시글입니다
+
         Slice<Comments> commentsList = commentsRepository.findByPosts_IdOrderByCreatedAtDesc(postId, pageable);
 
         if (commentsList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST); // 존재하지 않는 게시글입니다
+            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
         }
 
         List<CommentsResponseDto> commentsResponseDtoList = new ArrayList<>();
 
         for (Comments comments : commentsList) {
-            commentsResponseDtoList.add(new CommentsResponseDto(comments, comments.getNickname()));
+            if (posts.getUsers().getEmail().equals(comments.getEmail())) {
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, "글쓴이"));
+            } else {
+                commentsResponseDtoList.add(new CommentsResponseDto(comments));
+            }
         }
-
         return new SliceImpl<>(commentsResponseDtoList, pageable, commentsList.hasNext());
     }
 
@@ -66,7 +75,7 @@ public class CommentsService {
         Slice<Comments> commentsMeList = commentsRepository.findAllByAndEmailOrderByCreatedAtDesc(users.getEmail(), pageable);
 
         if (commentsMeList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST); // 존재하지 않는 게시글입니다
+            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
         }
 
         List<CommentsMeResponseDto> CommentsMeResponseDtoList = new ArrayList<>();
@@ -115,6 +124,61 @@ public class CommentsService {
         return commentsRepository.findById(id).orElseThrow(
                 () ->new CustomException(ErrorCode.COMMENTS_NOT_EXIST)); // 존재하지 않는 댓글입니다
     }
+
+//    // 댓글 수정
+//    @Transactional
+//    public MessageResponseDto commentsUpdate( Long commentId,
+//                                              CommentsRequestDto request,
+//                                              Users users) {
+//
+//        Comments comments = findById(commentId);
+//        Users existUser = checkUser(users); // 사용자 조회
+//        checkAuthority(existUser,comments.getPosts().getUsers());
+//        comments.update(request, users);
+//
+//        String message;
+//        if (existUser.getUserRole() == UserRoleEnum.ADMIN) {
+//            message = "관리자가 댓글을 수정하였습니다" ;
+//        } else {
+//            message = "댓글을 수정하였습니다";
+//        }
+//        return new MessageResponseDto(message, 200);
+//    }
+//
+//    // 댓글 삭제
+//    public MessageResponseDto commentsDelete(Long commentId,
+//                                             Users users) {
+//
+//        Comments comments = findById(commentId);
+//        Users existUser = checkUser(users); // 사용자 조회
+//        checkAuthority(existUser,comments.getPosts().getUsers());
+//        commentsRepository.delete(comments);
+//
+//        String message;
+//        if (existUser.getUserRole() == UserRoleEnum.ADMIN) {
+//            message = "관리자가 댓글을 삭제하였습니다" ;
+//        } else {
+//            message = "댓글을 삭제하였습니다";
+//        }
+//        return new MessageResponseDto(message, 200);
+//    }
+//
+//
+//    private Comments findById(Long id) {
+//        return commentsRepository.findById(id).orElseThrow(
+//                () ->new CustomException(ErrorCode.COMMENTS_NOT_EXIST)); // 존재하지 않는 댓글입니다
+//    }
+//
+//    private Users checkUser (Users users) {
+//        return userRepository.findByEmail(users.getEmail())
+//                .orElseThrow(()-> new CustomException(ErrorCode.ID_NOT_MATCH)); // 작성자가 일치하지 않습니다
+//    }
+//
+//    public void checkAuthority (Users existUsers, Users users) {
+//        if (!existUsers.getUserRole().equals(UserRoleEnum.ADMIN) && !existUsers.getEmail().equals(users.getEmail())){
+//            throw new CustomException(ErrorCode.NOT_ALLOWED); // 권한이 없습니다
+//        }
+//    }
 }
 
 

@@ -1,14 +1,11 @@
 package com.sparta.team2project.tripdate.entity;
 
-import com.sparta.team2project.posts.dto.TotalRequestDto;
 import com.sparta.team2project.posts.dto.TripDateOnlyRequestDto;
-import com.sparta.team2project.posts.dto.TripDateRequestDto;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.schedules.entity.Schedules;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,8 +25,9 @@ public class TripDate {
     @Column(nullable = false)
     private LocalDate chosenDate;
 
-    @Column(nullable = false)
-    private String subTitle;
+
+//    @Column(nullable = false)
+//    private String subTitle;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "posts_id",nullable = false)
@@ -38,16 +36,20 @@ public class TripDate {
     @OneToMany(mappedBy = "tripDate", cascade = {CascadeType.REMOVE})
     private List<Schedules> schedulesList = new ArrayList<>();
 
-    public TripDate(TripDateRequestDto tripDateRequestDto, Posts posts) {
+    public TripDate(TripDateOnlyRequestDto tripDateRequestDto, Posts posts) {
         this.chosenDate = tripDateRequestDto.getChosenDate();
         this.posts = posts;
-        this.subTitle = tripDateRequestDto.getSubTitle();
+
+//        this.subTitle = tripDateRequestDto.getSubTitle();
         //this.schedulesList = tripDateRequestDto.getSchedulesList();
+
 
     }
 
     public void updateTripDate(TripDateOnlyRequestDto tripDateOnlyRequestDto){
         this.chosenDate = tripDateOnlyRequestDto.getChosenDate();
-        this.subTitle = tripDateOnlyRequestDto.getSubTitle();
+
+//        this.subTitle = tripDateOnlyRequestDto.getSubTitle();
+
     }
 }

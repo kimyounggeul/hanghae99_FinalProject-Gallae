@@ -15,12 +15,11 @@ import java.util.stream.Collectors;
 public class TripDateOnlyResponseDto {
     private final Long tripDateId;
     private final LocalDate chosenDate;
-    private final String subTitle;
+
 
     public TripDateOnlyResponseDto(TripDate tripDate){
         this.tripDateId = tripDate.getId();
         this.chosenDate = tripDate.getChosenDate();
-        this.subTitle = tripDate.getSubTitle();
     }
     
 }

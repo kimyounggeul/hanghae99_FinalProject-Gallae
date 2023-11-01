@@ -33,4 +33,5 @@ public class PicturesResponseDto {
         this.pictureContentType = pictures.getPictureContentType();
         this.pictureSize = pictures.getPictureSize();
     }
+
 }

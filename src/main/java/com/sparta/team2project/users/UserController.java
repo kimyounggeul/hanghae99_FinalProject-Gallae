@@ -3,6 +3,7 @@ package com.sparta.team2project.users;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
 import com.sparta.team2project.email.dto.EmailRequestDto;
+import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -47,6 +48,15 @@ public class UserController {
         boolean checkNumber = userService.checkValidNumber(validNumberRequestDto, validNumberRequestDto.getEmail());
         return ResponseEntity.status(HttpStatus.OK).body(checkNumber);
     }
+
+    //닉네임 중복확인
+    @Operation(summary = "닉네임 중복확인", description = "닉네임 중복을 확인하는 api 입니다.")
+    @PostMapping("/signup/check-nickname")
+    public ResponseEntity<Boolean> checkNickName(@RequestBody CheckNickNameRequestDto checkNickNameRequestDto) {
+        boolean checkNumber = userService.checkNickName(checkNickNameRequestDto.getNickName());
+        return ResponseEntity.status(HttpStatus.OK).body(checkNumber);
+    }
+
 
 
     // 회원 탈퇴
