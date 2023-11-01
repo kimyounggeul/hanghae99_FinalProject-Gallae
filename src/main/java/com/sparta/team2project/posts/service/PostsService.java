@@ -163,11 +163,11 @@ public class PostsService {
         return getPostResponseDto(postsList);
     }
 
-    // 랭킹 목록 조회(상위 3개)
+    // 랭킹 목록 조회(상위 10개)
     public List<PostResponseDto> getRankPosts() {
 
-        // 상위 3개 게시물 가져오기 (좋아요 수 겹칠 시 createdAt 내림차순으로 정렬)
-        List<Posts> postsList = postsRepository.findTop3ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc();
+        // 상위 10개 게시물 가져오기 (좋아요 수 겹칠 시 createdAt 내림차순으로 정렬)
+        List<Posts> postsList = postsRepository.findTop10ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc();
         return getPostResponseDto(postsList);
     }
 

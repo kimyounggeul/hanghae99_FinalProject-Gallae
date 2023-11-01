@@ -8,9 +8,6 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
-import com.sparta.team2project.pictures.dto.PicturesResponseDto;
-import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.profile.dto.*;
 import com.sparta.team2project.s3.CustomMultipartFile;
@@ -31,7 +28,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 @Service
 @RequiredArgsConstructor
