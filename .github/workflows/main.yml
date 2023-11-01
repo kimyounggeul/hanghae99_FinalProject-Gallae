@@ -1,8 +1,10 @@
 name: Gallae
 
 on:
-  pull_request:
-    branches: [ "devlop"]
+#  pull_request:
+#    branches: [ "devlop"]
+  push:
+    branches: [ "server1" ]
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
