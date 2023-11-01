@@ -7,15 +7,9 @@ import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.email.EmailService;
-//import com.sparta.team2project.email.ValidNumber.ValidNumber;
-//import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
-//import com.sparta.team2project.refreshToken.RefreshToken;
-//import com.sparta.team2project.refreshToken.RefreshTokenRepository;
-//import com.sparta.team2project.refreshToken.TokenDto;
-import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -27,8 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 
@@ -38,13 +30,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
-//    private final ValidNumberRepository validNumberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final EmailService emailService;
+
     private final EmailService emailService;
     private final RedisUtil redisUtil;
 
-    //    private final ValidNumberRepository validNumberRepository;
     private final JwtUtil jwtUtil;
 
 
@@ -150,16 +139,18 @@ public class UserService {
         // 로그인 성공 시 액세스 토큰 및 리프레시 토큰 생성
         String accessToken = jwtUtil.createAccessToken(users.getEmail(), users.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
         String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
-        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
-
-        if (findRefreshToken.isPresent()) {
-            RefreshToken existingToken = findRefreshToken.get();
-            RefreshToken updateToken = existingToken.updateToken(refreshToken);
-            refreshTokenRepository.save(updateToken);
-        } else {
-            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
-            refreshTokenRepository.save(newToken);
-        }
+//        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
+//
+//        if (findRefreshToken.isPresent()) {
+//            RefreshToken existingToken = findRefreshToken.get();
+//            RefreshToken updateToken = existingToken.updateToken(refreshToken);
+//            refreshTokenRepository.save(updateToken);
+//        } else {
+//            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
+//            refreshTokenRepository.save(newToken);
+//        }
+        // Redis에 리프레시 토큰 저장
+        redisUtil.setDataExpire(users.getEmail(), refreshToken, 2 * 7 * 24 * 60 * 60 * 1000L); // 여기서 EXPIRATION_TIME은 리프레시 토큰의 만료 시간을 나타냅니다.
 
         response.addHeader(JwtUtil.ACCESS_KEY, accessToken);
         // 수정: 리프레시 토큰을 다시 생성하지 않고 기존 리프레시 토큰을 사용하도록 변경

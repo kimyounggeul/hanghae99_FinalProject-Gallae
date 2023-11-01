@@ -1,9 +1,9 @@
 package com.sparta.team2project.refreshToken;
 
+import com.sparta.team2project.commons.Util.JwtUtil;
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
-import com.sparta.team2project.commons.jwt.JwtUtil;
-import com.sparta.team2project.users.UserService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/token")
 public class TokenController {
     private final JwtUtil jwtUtil;
-    private final UserService userService; // 사용자 서비스
+    private final RedisUtil redisUtil; // RedisUtil 클래스 주입
 
 
     @PostMapping("/refreshAccessToken")
     public ResponseEntity<TokenDto> refreshAccessToken(@RequestHeader(JwtUtil.REFRESH_KEY) String refreshToken) {
         try {
-            // 리프레시 토큰 검증 및 사용자 확인
+            // 리프레시 토큰 검증
             if (jwtUtil.validateToken(refreshToken)) {
                 // 리프레시 토큰에서 사용자 정보를 가져와 새로운 액세스 토큰 생성
                 Claims claims = jwtUtil.getUserInfoFromToken(refreshToken);
@@ -45,4 +45,3 @@ public class TokenController {
         }
     }
 }
-

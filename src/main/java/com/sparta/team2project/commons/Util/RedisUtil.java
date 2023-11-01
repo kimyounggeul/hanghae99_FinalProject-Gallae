@@ -25,8 +25,14 @@ public class RedisUtil {
         valueOperations.set(key, value, expireDuration);
     }
 
+    public boolean exists(String key) {
+        return redisTemplate.hasKey(key);
+    }
+
     public void deleteData(String key) {
         // 데이터 삭제
         redisTemplate.delete(key);
     }
+
+
 }

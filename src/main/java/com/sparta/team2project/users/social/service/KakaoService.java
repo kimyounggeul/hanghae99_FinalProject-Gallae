@@ -10,7 +10,6 @@ import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import com.sparta.team2project.users.social.dto.KakaoUserInfoDto;
-import com.sparta.team2project.users.social.dto.TokenDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
