@@ -2,8 +2,10 @@ package com.sparta.team2project.profile;
 
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
-import com.sparta.team2project.pictures.dto.PicturesMessageResponseDto;
-import com.sparta.team2project.profile.dto.*;
+import com.sparta.team2project.profile.dto.AboutMeRequestDto;
+import com.sparta.team2project.profile.dto.PasswordRequestDto;
+import com.sparta.team2project.profile.dto.ProfileNickNameRequestDto;
+import com.sparta.team2project.profile.dto.ProfileResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -40,7 +42,13 @@ public class ProfileController {
     @PutMapping("/update-profileImg")
     public String updateProfileImg(@RequestParam("file")MultipartFile file,
                                                        @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return profileService.updateProfileImg(file, userDetails.getUsers());
+        if(file.getContentType() == null){
+            String defaultProfileImgURL = "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2Fb0SLv8%2FbtsyLoUxvAs%2FSKsGiOc7TzkebNvH4ZQE9K%2Fimg.png";
+            return defaultProfileImgURL;
+        }
+        else{
+            return profileService.updateProfileImg(file, userDetails.getUsers());
+        }
     }
 
     // 프로필 사진 조회
