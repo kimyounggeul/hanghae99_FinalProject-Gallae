@@ -1,7 +1,7 @@
 package com.sparta.team2project.users.social.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.commons.security.UserDetailsServiceImpl;
 import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.UserService;

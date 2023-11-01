@@ -4,7 +4,7 @@
 //import com.sparta.team2project.commons.entity.UserRoleEnum;
 //import com.sparta.team2project.commons.exceptionhandler.CustomException;
 //import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-//import com.sparta.team2project.commons.jwt.JwtUtil;
+//import com.sparta.team2project.commons.Util.JwtUtil;
 //import com.sparta.team2project.email.EmailService;
 //import com.sparta.team2project.email.ValidNumber.ValidNumber;
 //import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
@@ -26,10 +26,8 @@
 //import org.springframework.test.context.junit.jupiter.SpringExtension;
 //
 //import java.lang.reflect.Field;
-//import java.time.Clock;
-//import java.time.Instant;
 //import java.time.LocalTime;
-//import java.time.ZoneId;
+
 //import java.time.format.DateTimeFormatter;
 //import java.util.Optional;
 //

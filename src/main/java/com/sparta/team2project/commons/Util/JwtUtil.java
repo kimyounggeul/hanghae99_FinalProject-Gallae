@@ -1,4 +1,4 @@
-package com.sparta.team2project.commons.jwt;
+package com.sparta.team2project.commons.Util;
 
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;

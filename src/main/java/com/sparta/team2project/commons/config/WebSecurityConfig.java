@@ -1,11 +1,11 @@
 package com.sparta.team2project.commons.config;
 
 
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.security.JwtAuthorizationFilter;
 import com.sparta.team2project.commons.security.UserDetailsServiceImpl;
-import com.sparta.team2project.refreshToken.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +22,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
@@ -34,7 +33,8 @@ public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
-    private final RefreshTokenRepository RefreshTokenRepository;
+    private final RedisUtil redisUtil; // RedisUtil 주입
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -49,13 +49,14 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, RefreshTokenRepository);
+        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, redisUtil);
     }
 
     //Cors
     @Bean
     public CorsConfigurationSource configurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
 
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://gallae-fe.vercel.app"));
 
