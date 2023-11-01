@@ -6,6 +6,8 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.posts.entity.Posts;
+import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.replies.dto.RepliesMeResponseDto;
 import com.sparta.team2project.replies.dto.RepliesRequestDto;
 import com.sparta.team2project.replies.dto.RepliesResponseDto;
@@ -28,6 +30,7 @@ public class RepliesService {
     private final CommentsRepository commentsRepository;
 
 
+
     // 대댓글 생성
     public MessageResponseDto repliesCreate(Long commentId,
                                             RepliesRequestDto requestDto,
@@ -46,18 +49,26 @@ public class RepliesService {
     public Slice<RepliesResponseDto> repliesList(Long commentId,
                                                  Pageable pageable) {
 
+        Comments comments = commentsRepository.findById(commentId).orElseThrow(
+                () -> new CustomException(ErrorCode.COMMENTS_NOT_EXIST)); // 존재하지 않는 댓글입니다
+
+        Posts posts = comments.getPosts();
+
         Slice<Replies> repliesList = repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable);
 
         if (repliesList.isEmpty()) {
-            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
+            throw new CustomException(ErrorCode.REPLIES_NOT_EXIST); // 존재하지 않는 대댓글입니다
         }
 
         List<RepliesResponseDto> RepliesResponseDtoList = new ArrayList<>();
 
         for (Replies replies : repliesList) {
-            RepliesResponseDtoList.add(new RepliesResponseDto(replies, replies.getNickname()));
+            if (posts.getUsers().getEmail().equals(replies.getEmail())) {
+                RepliesResponseDtoList.add(new RepliesResponseDto(replies, "글쓴이"));
+            } else {
+                RepliesResponseDtoList.add(new RepliesResponseDto(replies));
+            }
         }
-
         return new SliceImpl<>(RepliesResponseDtoList, pageable, repliesList.hasNext());
     }
 
@@ -68,7 +79,7 @@ public class RepliesService {
         Slice<Replies> repliesMeList = repliesRepository.findAllByAndEmailOrderByCreatedAtDesc(users.getEmail(), pageable);
 
         if (repliesMeList.isEmpty()) {
-            throw new CustomException(ErrorCode.COMMENTS_NOT_EXIST); // 존재하지 않는 댓글입니다
+            throw new CustomException(ErrorCode.REPLIES_NOT_EXIST); // 존재하지 않는 대댓글입니다
         }
 
         List<RepliesMeResponseDto> RepliesMeResponseDtoList = new ArrayList<>();
@@ -113,7 +124,6 @@ public class RepliesService {
                 throw new CustomException(ErrorCode.NOT_ALLOWED); // 권한이 없습니다
         }
     }
-
 
     private Replies findById(Long id) {
         return repliesRepository.findById(id).orElseThrow(

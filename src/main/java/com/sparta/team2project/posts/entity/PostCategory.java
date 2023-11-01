@@ -8,8 +8,8 @@ public enum PostCategory {
     가족,
     친구,
     연인,
-    친척,
+    혼자,
     반려동물,
-    단체;
+    지인;
 
 }

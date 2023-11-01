@@ -2,22 +2,17 @@ package com.sparta.team2project.posts.controller;
 
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
-
-import com.sparta.team2project.posts.dto.PostMessageResponseDto;
-import com.sparta.team2project.posts.dto.PostResponseDto;
-import com.sparta.team2project.posts.dto.TotalRequestDto;
-import com.sparta.team2project.posts.dto.UpdateRequestDto;
-
 import com.sparta.team2project.posts.dto.*;
-
 import com.sparta.team2project.posts.service.PostsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -62,20 +57,24 @@ public class PostsController {
     public ResponseEntity<List<PostResponseDto>> getKeywordPost(@RequestParam String keyword){return ResponseEntity.ok(postsService.getKeywordPosts(keyword));}
 
     // 랭킹 목록 조회
-    @Operation(summary = " 좋아요 순 게시글 조회 ", description = "TOP3 좋아요 순 게시글 조회 api 입니다.")
+    @Operation(summary = " 좋아요 순 게시글 조회 ", description = "TOP10 좋아요 순 게시글 조회 api 입니다.")
     @GetMapping("/posts/rank")
     public ResponseEntity<List<PostResponseDto>> getRankPosts(){return ResponseEntity.ok(postsService.getRankPosts());}
 
     // 사용자가 좋아요 누른 게시글 조회
     @Operation(summary = " 사용자가 좋아요 한 게시글 조회 ", description = "사용자가 좋아요 한 게시글 조회 api 입니다.")
     @GetMapping("/posts/like")
-    public ResponseEntity<List<PostResponseDto>> getUserLikePosts(@AuthenticationPrincipal UserDetailsImpl userDetails){return ResponseEntity.ok(postsService.getUserLikePosts(userDetails.getUsers()));}
+    public ResponseEntity<Page<PostResponseDto>> getUserLikePosts(@RequestParam int page, @RequestParam int size,@AuthenticationPrincipal UserDetailsImpl userDetails){return ResponseEntity.ok(postsService.getUserLikePosts(userDetails.getUsers(),page,size));}
 
+    // 사용자가 좋아요 누른 게시글 id만 조회
+    @Operation(summary = " 사용자가 좋아요 한 게시글 id만 조회 ", description = "사용자가 좋아요 한 게시글 id만 조회 api 입니다.")
+    @GetMapping("/postlike/id")
+    public ResponseEntity<List<Long>> getUserLikePostsId(@AuthenticationPrincipal UserDetailsImpl userDetails){return ResponseEntity.ok(postsService.getUserLikePostsId(userDetails.getUsers()));}
 
     // 좋아요 기능
     @Operation(summary = " 좋아요 기능 ", description = "좋아요 클릭시 1 좋아요 또 누르면 1 취소하는 api 입니다.")
     @GetMapping("/posts/like/{postId}")
-    public ResponseEntity<MessageResponseDto> like(@PathVariable Long postId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<LikeResponseDto> like(@PathVariable Long postId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(postsService.like(postId,userDetails.getUsers()));
     }
 
@@ -92,4 +91,40 @@ public class PostsController {
     public ResponseEntity<MessageResponseDto> deletePost(@PathVariable Long postId, @AuthenticationPrincipal UserDetailsImpl userDetails){
         return ResponseEntity.ok(postsService.deletePost(postId,userDetails.getUsers()));
     }
+
+    // 사진 등록 API 메서드
+    @PostMapping("/posts/{postId}/postsPictures")
+    public String uploadPostsPictures(@PathVariable("postId") Long postId,
+                                            @RequestParam("file") MultipartFile file,
+                                            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+            return postsService.uploadPostsPictures(postId, file, userDetails.getUsers());
+    }
+    @PostMapping("/")
+
+    @GetMapping("/posts/{postId}/postsPictures")
+    public PostsPicturesUploadResponseDto getPostsPictures(@PathVariable("postId") Long postId){
+        return postsService.getPostsPictures(postId);
+    }
+
+    @GetMapping("/postsPictures/{postsPicturesId}")
+    public String getPostsPicture(@PathVariable("postsPicturesId") Long postsPicturesId){
+        return postsService.getPostsPicture(postsPicturesId);
+    }
+
+    @PutMapping("/postsPictures/{postsPicturesId}")
+    public String updatePictures(@PathVariable("postsPicturesId") Long postsPicturesId,
+                                                     @RequestParam("file") MultipartFile file,
+                                                     @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return postsService.updatePictures(postsPicturesId, file, userDetails.getUsers());
+    }
+
+    @DeleteMapping("/postsPictures/{postsPicturesId}")
+    public MessageResponseDto deletePictures(@PathVariable("postsPicturesId") Long postsPicturesId,
+                                             @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        return postsService.deletePictures(postsPicturesId, userDetails.getUsers());
+    }
+
 }

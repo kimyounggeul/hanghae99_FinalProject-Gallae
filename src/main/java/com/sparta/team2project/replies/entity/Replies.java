@@ -19,9 +19,9 @@ public class Replies extends TimeStamped {
     @Column(name ="replies_id")
     private Long id;
 
-    private String nickname;
-
     private String email;
+
+    private String nickname;
 
     @Column(nullable = false, length = 500)
     private String contents;
@@ -31,14 +31,15 @@ public class Replies extends TimeStamped {
     private Comments comments;
 
     public Replies(RepliesRequestDto requestDto, Users users, Comments comments) {
-        this.nickname = users.getNickName();
         this.contents = requestDto.getContents();
         this.comments = comments;
         this.email = users.getEmail();
+        this.nickname = users.getNickName();
     }
 
     public void update(RepliesRequestDto requestDto, Users users) {
-        this.nickname = users.getNickName();
         this.contents = requestDto.getContents();
+        this.email = users.getEmail();
+        this.nickname = users.getNickName();
     }
 }
