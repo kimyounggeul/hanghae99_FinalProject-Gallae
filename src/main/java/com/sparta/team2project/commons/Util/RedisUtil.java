@@ -34,5 +34,12 @@ public class RedisUtil {
         redisTemplate.delete(key);
     }
 
-
+    public void saveRefreshToken(String email, String refreshToken) {
+        String key = "refreshToken:" + email; // 사용자 별로 고유한 키 생성
+        setDataExpire(key, refreshToken, 2 * 7 * 24 * 60 * 60 * 1000L); // 리프레시 토큰 저장 및 만료 시간 설정
+    }
+    public String getRefreshToken(String email) {
+        String key = "refreshToken:" + email; // 사용자 별로 고유한 키 생성
+        return getData(key); // 저장된 리프레시 토큰 가져오기
+    }
 }

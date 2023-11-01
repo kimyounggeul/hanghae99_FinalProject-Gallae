@@ -136,25 +136,21 @@ public class UserService {
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비밀번호가 일치하지 않음
         }
-        // 로그인 성공 시 액세스 토큰 및 리프레시 토큰 생성
+        // 로그인 성공 시 액세스 토큰 생성
         String accessToken = jwtUtil.createAccessToken(users.getEmail(), users.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
-        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
-//        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
-//
-//        if (findRefreshToken.isPresent()) {
-//            RefreshToken existingToken = findRefreshToken.get();
-//            RefreshToken updateToken = existingToken.updateToken(refreshToken);
-//            refreshTokenRepository.save(updateToken);
-//        } else {
-//            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
-//            refreshTokenRepository.save(newToken);
-//        }
-        // Redis에 리프레시 토큰 저장
-        redisUtil.setDataExpire(users.getEmail(), refreshToken, 2 * 7 * 24 * 60 * 60 * 1000L); // 여기서 EXPIRATION_TIME은 리프레시 토큰의 만료 시간을 나타냅니다.
-
+        // Redis에 저장된 리프레시 토큰을 가져옴
+        String storedRefreshToken = redisUtil.getRefreshToken(users.getEmail());
+        if (storedRefreshToken == null) {
+            // 저장된 리프레시 토큰이 없으면 새로 생성
+            String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
+            // Redis에 새로운 리프레시 토큰 저장
+            redisUtil.saveRefreshToken(users.getEmail(), refreshToken);
+            response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
+        } else {
+            // 이미 저장된 리프레시 토큰 사용
+            response.addHeader(JwtUtil.REFRESH_KEY, storedRefreshToken);
+        }
         response.addHeader(JwtUtil.ACCESS_KEY, accessToken);
-        // 수정: 리프레시 토큰을 다시 생성하지 않고 기존 리프레시 토큰을 사용하도록 변경
-        response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
 
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
     }
