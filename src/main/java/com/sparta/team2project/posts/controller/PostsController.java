@@ -100,7 +100,6 @@ public class PostsController {
     ){
             return postsService.uploadPostsPictures(postId, file, userDetails.getUsers());
     }
-    @PostMapping("/")
 
     @GetMapping("/posts/{postId}/postsPictures")
     public PostsPicturesUploadResponseDto getPostsPictures(@PathVariable("postId") Long postId){
