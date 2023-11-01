@@ -1,13 +1,12 @@
 package com.sparta.team2project.pictures.dto;
 
 import com.sparta.team2project.pictures.entity.Pictures;
-import com.sparta.team2project.schedules.entity.Schedules;
 import lombok.Getter;
-import org.springframework.core.io.Resource;
 
 @Getter
 public class PicturesResponseDto {
     private final Long schedulesId;
+    private Long picturesId;
     private final String picturesURL;
     private final String picturesName;
     private final String pictureContentType;
@@ -28,6 +27,7 @@ public class PicturesResponseDto {
 
     public PicturesResponseDto(Pictures pictures){
         this.schedulesId = pictures.getSchedules().getId();
+        this.picturesId = pictures.getId();
         this.picturesURL = pictures.getPicturesURL();
         this.picturesName = pictures.getPicturesName();
         this.pictureContentType = pictures.getPictureContentType();
