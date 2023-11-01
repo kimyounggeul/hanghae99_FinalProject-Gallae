@@ -96,13 +96,14 @@ public class WebSecurityConfig {
                                 .requestMatchers("/").permitAll() // 메인 페이지 요청 허가
                                 .requestMatchers("/api/users/**").permitAll()
                                 // 조회기능은 누구나 가능합니다!
-                                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/posts/rank").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/posts/*/comments/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/posts/*/comments/*/replies/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/comments/*/replies/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/schedules/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/search/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/posts/rank").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/posts/*/comments/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/posts/*/comments/*/replies/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/comments/*/replies/**").permitAll()
+//                                .requestMatchers(HttpMethod.GET, "/api/schedules/**").permitAll()
+                                .requestMatchers(HttpMethod.GET).permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
                                 .requestMatchers("https://kapi.kakao.com", "/v2/user/me", "http://localhost:8080/api/users/kakao/callback/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
 

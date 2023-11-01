@@ -39,8 +39,6 @@ public class KakaoService {
 
     @Value("${kakaoClientId}")
     private String kakaoClientId;
-    @Value("${kakaoClientSecret}")
-    private String kakaoClientSecret;
     @Value("${kakaoRedirectUri}")
     private String kakaoRedirectUri;
 
@@ -78,7 +76,6 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", kakaoClientId);
-        body.add("client_secret", kakaoClientSecret);
         body.add("redirect_uri", kakaoRedirectUri);
         body.add("code", code);
 
