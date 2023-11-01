@@ -11,6 +11,9 @@ import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
+import com.sparta.team2project.refreshToken.RefreshToken;
+import com.sparta.team2project.refreshToken.RefreshTokenRepository;
+import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
@@ -34,9 +37,11 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
-    private final EmailService emailService;
     private final ValidNumberRepository validNumberRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
     private final JwtUtil jwtUtil;
+
 
     // ADMIN_TOKEN
     @Value("${ADMIN_TOKEN}")
@@ -166,20 +171,32 @@ public class UserService {
         return ResponseEntity.ok(new MessageResponseDto("회원탈퇴 완료", HttpStatus.OK.value()));
     }
 
+    // 로그인 기능
     public ResponseEntity<MessageResponseDto> login(LoginRequestDto requestDto, HttpServletResponse response) {
         Users users = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(() ->
                 new CustomException(ErrorCode.ID_NOT_FOUND)); // 이메일 여부 확인
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
-            throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비번이 맞는지 확인
+            throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비밀번호가 일치하지 않음
         }
-        String accessToken = jwtUtil.createToken(users.getEmail(), users.getUserRole()); // 토큰 생성
-//        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole()); // 토큰 생성
+        // 로그인 성공 시 액세스 토큰 및 리프레시 토큰 생성
+        String accessToken = jwtUtil.createAccessToken(users.getEmail(), users.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
+        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
+        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
 
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken); // 생성된 토큰 헤더에 넣기
-//        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken); // 생성된 토큰 헤더에 넣기
+        if (findRefreshToken.isPresent()) {
+            RefreshToken existingToken = findRefreshToken.get();
+            RefreshToken updateToken = existingToken.updateToken(refreshToken);
+            refreshTokenRepository.save(updateToken);
+        } else {
+            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
+            refreshTokenRepository.save(newToken);
+        }
 
+        response.addHeader(JwtUtil.ACCESS_KEY, accessToken);
+        // 수정: 리프레시 토큰을 다시 생성하지 않고 기존 리프레시 토큰을 사용하도록 변경
+        response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
 
-        return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpServletResponse.SC_OK));
+        return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
     }
 
     // 랜덤 닉네임 생성 메서드
