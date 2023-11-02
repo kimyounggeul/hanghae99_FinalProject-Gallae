@@ -1,8 +1,8 @@
 package com.sparta.team2project.commons.security;
 
+import com.sparta.team2project.commons.Util.JwtUtil;
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
-import com.sparta.team2project.commons.jwt.JwtUtil;
-import com.sparta.team2project.refreshToken.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -24,10 +25,11 @@ import java.io.IOException;
 
 @Slf4j(topic = "JWT 검증 및 인가")
 @RequiredArgsConstructor
+@Component("AuthFilter")
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisUtil redisUtil;
 
 
     // 헤더에 담아서 요청할 때
@@ -40,7 +42,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(accessToken)) {
             try {
                 if (!jwtUtil.validateToken(accessToken)) {
-                    if (jwtUtil.validateToken(refreshToken) && refreshTokenRepository.existsByRefreshToken(refreshToken)) {
+                    if (jwtUtil.validateToken(refreshToken) && redisUtil.exists(refreshToken)) {
                         log.info("AccessToken가 만료되어 RefreshToken으로 새로운 AccessToken을 발급합니다.");
                         Claims refreshTokenInfo = jwtUtil.getUserInfoFromToken(refreshToken);
                         String email = refreshTokenInfo.getSubject();
