@@ -11,7 +11,6 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.replies.dto.RepliesResponseDto;
-import com.sparta.team2project.replies.entity.Replies;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,8 +131,8 @@ class CommentsControllerTest {
         mvc.perform(MockMvcRequestBuilders.get("/api/posts/" + postId + "/comments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(responseDto)))
-                        .andExpect(status().isOk())
-                        .andDo(print());
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
     @WithMockUser
@@ -165,8 +164,8 @@ class CommentsControllerTest {
                         .content(objectMapper.writeValueAsString(responseDto))
                         .with(csrf()) // CSRF 토큰을 요청에 포함
                         .principal(principal)) // 가짜 사용자 principal 설정
-                        .andExpect(status().isOk())
-                        .andDo(print());
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
     @WithMockUser

@@ -13,6 +13,7 @@ import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.replies.dto.RepliesResponseDto;
 import com.sparta.team2project.replies.entity.Replies;
+import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class CommentsService {
         Comments comments = new Comments(requestDto, users, posts);
         commentsRepository.save(comments);
 
-        return new MessageResponseDto ("댓글이다", 200);
+        return new MessageResponseDto ("댓글", 200);
     }
 
     // 댓글 조회
