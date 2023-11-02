@@ -1,6 +1,6 @@
 package com.sparta.team2project.commons.config;
 
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.servers.Server;
@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
                 version = "v3"),
         servers = {
                 @Server(url = "http://localhost:8080", description = "LocalHost Server"),
-                @Server(url = "http://43.201.71.243", description = "Server")
+                @Server(url = "http://3.37.69.125", description = "Server")
         })
 
 @Configuration
@@ -30,7 +30,7 @@ public class SwaggerConfig {
                 .title("TEST")
                 .description("Api Description");
 
-        String access_token_header = JwtUtil.AUTHORIZATION_HEADER;
+        String access_token_header = JwtUtil.ACCESS_KEY;
 
 
         // 헤더에 security scheme 도 같이 보내게 만드는 것

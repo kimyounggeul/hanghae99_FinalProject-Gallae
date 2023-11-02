@@ -13,5 +13,5 @@ public interface PostsRepository extends JpaRepository<Posts, Long>,PostsReposit
 
     List<Posts> findByUsersOrderByCreatedAtDesc(Users users);
 
-    List<Posts> findTop3ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc();
+    List<Posts> findTop10ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc();
 }

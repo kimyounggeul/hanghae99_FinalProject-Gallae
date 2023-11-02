@@ -57,7 +57,7 @@ public class PostsController {
     public ResponseEntity<List<PostResponseDto>> getKeywordPost(@RequestParam String keyword){return ResponseEntity.ok(postsService.getKeywordPosts(keyword));}
 
     // 랭킹 목록 조회
-    @Operation(summary = " 좋아요 순 게시글 조회 ", description = "TOP3 좋아요 순 게시글 조회 api 입니다.")
+    @Operation(summary = " 좋아요 순 게시글 조회 ", description = "TOP10 좋아요 순 게시글 조회 api 입니다.")
     @GetMapping("/posts/rank")
     public ResponseEntity<List<PostResponseDto>> getRankPosts(){return ResponseEntity.ok(postsService.getRankPosts());}
 

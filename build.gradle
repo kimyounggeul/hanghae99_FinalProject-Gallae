@@ -4,6 +4,10 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.3'
 }
 
+jar {
+	enabled = false
+}
+
 group = 'com.sparta'
 version = '0.0.1-SNAPSHOT'
 
@@ -25,8 +29,6 @@ repositories {
 dependencies {
 	// Adobe S3Mock
 	testImplementation 'io.findify:s3mock_2.13:0.2.6'
-
-
 
 	// JUnit5
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
@@ -99,10 +101,17 @@ dependencies {
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+
+
 	//SpringBoot Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	//SpringBoot Security Test
 	testImplementation 'org.springframework.security:spring-security-test'
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 }
 

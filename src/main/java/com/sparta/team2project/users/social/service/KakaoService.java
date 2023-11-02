@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
+import com.sparta.team2project.refreshToken.TokenDto;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import com.sparta.team2project.users.social.dto.KakaoUserInfoDto;
-import com.sparta.team2project.users.social.dto.TokenDto;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +39,6 @@ public class KakaoService {
 
     @Value("${kakaoClientId}")
     private String kakaoClientId;
-    @Value("${kakaoClientSecret}")
-    private String kakaoClientSecret;
     @Value("${kakaoRedirectUri}")
     private String kakaoRedirectUri;
 
@@ -52,10 +50,10 @@ public class KakaoService {
         // 3. 필요시에 회원가입
         Users kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
         // 4. JWT 토큰 반환
-        String accessToken = jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getUserRole());
+        String accessToken = jwtUtil.createAccessToken(kakaoUser.getEmail(), kakaoUser.getUserRole());
 //        String refreshToken = jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getUserRole()); // 리프레시 토큰 추가
 
-        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
+        response.setHeader(JwtUtil.ACCESS_KEY, accessToken);
 //        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken);
 
         return new TokenDto(accessToken);
@@ -78,7 +76,6 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", kakaoClientId);
-        body.add("client_secret", kakaoClientSecret);
         body.add("redirect_uri", kakaoRedirectUri);
         body.add("code", code);
 

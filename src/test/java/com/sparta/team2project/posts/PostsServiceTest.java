@@ -349,7 +349,7 @@ public class PostsServiceTest {
                 .thenComparing(Posts::getCreatedAt, Comparator.reverseOrder()));
 
         // PostsRepository의 동작 설정
-        when(postsRepository.findTop3ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc())
+        when(postsRepository.findTop10ByTitleIsNotNullAndContentsIsNotNullOrderByLikeNumDescCreatedAtDesc())
                 .thenReturn(mockPostsList);
 
         // 테스트 메서드 호출
