@@ -45,32 +45,32 @@ public class RepliesService {
         return new MessageResponseDto ("대댓글을 작성하였습니다", 200);
     }
 
-    // 대댓글 조회
-    public Slice<RepliesResponseDto> repliesList(Long commentId,
-                                                 Pageable pageable) {
-
-        Comments comments = commentsRepository.findById(commentId).orElseThrow(
-                () -> new CustomException(ErrorCode.COMMENTS_NOT_EXIST)); // 존재하지 않는 댓글입니다
-
-        Posts posts = comments.getPosts();
-
-        Slice<Replies> repliesList = repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable);
-
-        if (repliesList.isEmpty()) {
-            throw new CustomException(ErrorCode.REPLIES_NOT_EXIST); // 존재하지 않는 대댓글입니다
-        }
-
-        List<RepliesResponseDto> RepliesResponseDtoList = new ArrayList<>();
-
-        for (Replies replies : repliesList) {
-            if (posts.getUsers().getEmail().equals(replies.getEmail())) {
-                RepliesResponseDtoList.add(new RepliesResponseDto(replies, "글쓴이"));
-            } else {
-                RepliesResponseDtoList.add(new RepliesResponseDto(replies));
-            }
-        }
-        return new SliceImpl<>(RepliesResponseDtoList, pageable, repliesList.hasNext());
-    }
+//    // 대댓글 조회
+//    public Slice<RepliesResponseDto> repliesList(Long commentId,
+//                                                 Pageable pageable) {
+//
+//        Comments comments = commentsRepository.findById(commentId).orElseThrow(
+//                () -> new CustomException(ErrorCode.COMMENTS_NOT_EXIST)); // 존재하지 않는 댓글입니다
+//
+//        Posts posts = comments.getPosts();
+//
+//        Slice<Replies> repliesList = repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable);
+//
+//        if (repliesList.isEmpty()) {
+//            throw new CustomException(ErrorCode.REPLIES_NOT_EXIST); // 존재하지 않는 대댓글입니다
+//        }
+//
+//        List<RepliesResponseDto> RepliesResponseDtoList = new ArrayList<>();
+//
+//        for (Replies replies : repliesList) {
+//            if (posts.getUsers().getEmail().equals(replies.getEmail())) {
+//                RepliesResponseDtoList.add(new RepliesResponseDto(replies, "글쓴이"));
+//            } else {
+//                RepliesResponseDtoList.add(new RepliesResponseDto(replies));
+//            }
+//        }
+//        return new SliceImpl<>(RepliesResponseDtoList, pageable, repliesList.hasNext());
+//    }
 
     // 마이페이지에서 내가 쓴 대댓글 조회
     public Slice<RepliesMeResponseDto> repliesMeList(Users users,

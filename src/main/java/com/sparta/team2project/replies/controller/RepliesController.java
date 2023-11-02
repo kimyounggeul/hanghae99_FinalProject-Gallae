@@ -35,13 +35,13 @@ public class RepliesController {
         return ResponseEntity.ok(repliesService.repliesCreate(commentId, requestDto, userDetails.getUsers()));
     }
 
-    // 대댓글 조회
-    @Operation(summary = "댓글별 대댓글 조회", description = "댓글별 대댓글 조회 api 입니다.")
-    @GetMapping("/comments/{commentId}/replies")
-    public ResponseEntity<Slice<RepliesResponseDto>> repliesList(@PathVariable("commentId") Long commentId,
-                                                                 @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(repliesService.repliesList(commentId, pageable));
-    }
+//    // 대댓글 조회
+//    @Operation(summary = "댓글별 대댓글 조회", description = "댓글별 대댓글 조회 api 입니다.")
+//    @GetMapping("/comments/{commentId}/replies")
+//    public ResponseEntity<Slice<RepliesResponseDto>> repliesList(@PathVariable("commentId") Long commentId,
+//                                                                 @PageableDefault Pageable pageable) {
+//        return ResponseEntity.ok(repliesService.repliesList(commentId, pageable));
+//    }
 
     // 마이페이지에서 내가 쓴 대댓글 조회
     @Operation(summary = "사용자별 대댓글 조회", description = "사용자가 쓴 대댓글 조회 api 입니다.")
