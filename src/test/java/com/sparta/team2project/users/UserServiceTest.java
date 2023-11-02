@@ -6,8 +6,7 @@
 //import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 //import com.sparta.team2project.commons.Util.JwtUtil;
 //import com.sparta.team2project.email.EmailService;
-//import com.sparta.team2project.email.ValidNumber.ValidNumber;
-//import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
+//
 //import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 //import com.sparta.team2project.profile.ProfileRepository;
 //import com.sparta.team2project.users.dto.LoginRequestDto;
@@ -27,7 +26,7 @@
 //
 //import java.lang.reflect.Field;
 //import java.time.LocalTime;
-
+//
 //import java.time.format.DateTimeFormatter;
 //import java.util.Optional;
 //
@@ -46,8 +45,8 @@
 //    private PasswordEncoder passwordEncoder;
 //    @Mock
 //    private ProfileRepository profileRepository;
-//    @Mock
-//    private ValidNumberRepository validNumberRepository;
+////    @Mock
+////    private ValidNumberRepository validNumberRepository;
 //    @Mock
 //    private EmailService emailService;
 //    @Mock
