@@ -43,5 +43,6 @@ out/
 .vscode/
 
 ### Properties ###
-/src/main/resources/application-gallae.properties
+/src/main/resources/application-localhost.properties
+/src/main/resources/application-server.properties
 
