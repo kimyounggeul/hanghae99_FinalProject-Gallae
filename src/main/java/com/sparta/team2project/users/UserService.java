@@ -161,6 +161,8 @@ public class UserService {
         }
 
         userRepository.delete(users);
+        // 리프레시 토큰 삭제
+        redisUtil.deleteRefreshToken(email);
         return ResponseEntity.ok(new MessageResponseDto("회원탈퇴 완료", HttpStatus.OK.value()));
     }
 
