@@ -41,4 +41,7 @@ out/
 
 ### VS Code ###
 .vscode/
-/src/main/resources/application.properties
+
+### Properties ###
+/src/main/resources/application-gallae.properties
+
