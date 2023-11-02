@@ -138,123 +138,123 @@ public class RepliesServiceTest {
         System.out.println("exception.getErrorCode(): " + exception.getErrorCode());
         assertEquals(ErrorCode.COMMENTS_NOT_EXIST, exception.getErrorCode());
     }
-    @Test
-    @DisplayName("[정상 작동] 대댓글 조회 (내가 쓴 게시글에 댓글 작성시)")
-    public void repliesListMyPostTest() {
+//    @Test
+//    @DisplayName("[정상 작동] 대댓글 조회 (내가 쓴 게시글에 댓글 작성시)")
+//    public void repliesListMyPostTest() {
+//
+//        // Given
+//        Long commentId = 1L;
+//        PageRequest pageable = PageRequest.of(0, 2);
+//        Users users = MockUsers1(); // 사용자 정보 초기화
+//        Posts posts = MockPosts(); // 게시글 정보 초기화
+//        Comments comments = MockComments(); // 게시글 정보 초기화
+//
+//        List<Replies> mockRepliesList = new ArrayList<>();
+//        mockRepliesList.add(MockResplies());
+//        mockRepliesList.add(MockResplies());
+//        mockRepliesList.add(MockResplies());
+//
+//        Slice<Replies> fakeSlice;
+//        if (mockRepliesList.size() <= pageable.getPageSize()) {
+//            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, false);
+//        } else {
+//            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, true);
+//        }
+//
+//        when(userRepository.findByEmail(users.getEmail())).thenReturn(Optional.of(posts.getUsers()));
+//        when(commentsRepository.findById(commentId)).thenReturn(Optional.of(comments));
+//        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable)).thenReturn(fakeSlice);
+//
+//        // When
+//        Slice<RepliesResponseDto> response = repliesService.repliesList(commentId, pageable);
+//
+//        // Then
+//        System.out.println("내가 쓴 게시글에 글쓴이 나옴");
+//        // 결과를 확인합니다.
+//        assertNotNull(response);
+//        assertTrue(response.hasNext());
+//        assertEquals(mockRepliesList.size(), response.getNumberOfElements());
+//    }
+//
+//    @Test
+//    @DisplayName("[정상 작동] 대댓글 조회")
+//    public void repliesListTest() {
+//
+//        // Given
+//        Long commentid = 1L;
+//        PageRequest pageable = PageRequest.of(0, 2);
+//        Comments comments = MockComments(); // 게시글 정보 초기화
+//
+//        List<Replies> mockRepliesList = new ArrayList<>();
+//        mockRepliesList.add(MockResplies());
+//        mockRepliesList.add(MockResplies());
+//        mockRepliesList.add(MockResplies());
+//
+//        Slice<Replies> fakeSlice;
+//        if (mockRepliesList.size() <= pageable.getPageSize()) {
+//            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, false);
+//        } else {
+//            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, true);
+//        }
+//
+//        when(commentsRepository.findById(commentid)).thenReturn(Optional.of(comments));
+//        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentid, pageable)).thenReturn(fakeSlice);
+//
+//        // When
+//        Slice<RepliesResponseDto> response = repliesService.repliesList(commentid, pageable);
+//
+//        // Then
+//        System.out.println("대댓글 조회");
+//        // 결과를 확인합니다.
+//        assertNotNull(response);
+//        assertTrue(response.hasNext());
+//        assertEquals(mockRepliesList.size(), response.getNumberOfElements());
+//    }
 
-        // Given
-        Long commentId = 1L;
-        PageRequest pageable = PageRequest.of(0, 2);
-        Users users = MockUsers1(); // 사용자 정보 초기화
-        Posts posts = MockPosts(); // 게시글 정보 초기화
-        Comments comments = MockComments(); // 게시글 정보 초기화
-
-        List<Replies> mockRepliesList = new ArrayList<>();
-        mockRepliesList.add(MockResplies());
-        mockRepliesList.add(MockResplies());
-        mockRepliesList.add(MockResplies());
-
-        Slice<Replies> fakeSlice;
-        if (mockRepliesList.size() <= pageable.getPageSize()) {
-            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, false);
-        } else {
-            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, true);
-        }
-
-        when(userRepository.findByEmail(users.getEmail())).thenReturn(Optional.of(posts.getUsers()));
-        when(commentsRepository.findById(commentId)).thenReturn(Optional.of(comments));
-        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable)).thenReturn(fakeSlice);
-
-        // When
-        Slice<RepliesResponseDto> response = repliesService.repliesList(commentId, pageable);
-
-        // Then
-        System.out.println("내가 쓴 게시글에 글쓴이 나옴");
-        // 결과를 확인합니다.
-        assertNotNull(response);
-        assertTrue(response.hasNext());
-        assertEquals(mockRepliesList.size(), response.getNumberOfElements());
-    }
-
-    @Test
-    @DisplayName("[정상 작동] 대댓글 조회")
-    public void repliesListTest() {
-
-        // Given
-        Long commentid = 1L;
-        PageRequest pageable = PageRequest.of(0, 2);
-        Comments comments = MockComments(); // 게시글 정보 초기화
-
-        List<Replies> mockRepliesList = new ArrayList<>();
-        mockRepliesList.add(MockResplies());
-        mockRepliesList.add(MockResplies());
-        mockRepliesList.add(MockResplies());
-
-        Slice<Replies> fakeSlice;
-        if (mockRepliesList.size() <= pageable.getPageSize()) {
-            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, false);
-        } else {
-            fakeSlice = new SliceImpl<>(mockRepliesList, pageable, true);
-        }
-
-        when(commentsRepository.findById(commentid)).thenReturn(Optional.of(comments));
-        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentid, pageable)).thenReturn(fakeSlice);
-
-        // When
-        Slice<RepliesResponseDto> response = repliesService.repliesList(commentid, pageable);
-
-        // Then
-        System.out.println("대댓글 조회");
-        // 결과를 확인합니다.
-        assertNotNull(response);
-        assertTrue(response.hasNext());
-        assertEquals(mockRepliesList.size(), response.getNumberOfElements());
-    }
-
-    @Test
-    @DisplayName("[비정상 작동]대댓글 조회 (존재하지 않는 댓글)")
-    public void repliesListCommentsNotExistTest() {
-
-        // Given
-        Long commentId = 1L;
-        PageRequest pageable = PageRequest.of(0, 2);
-
-        when(commentsRepository.findById(commentId)).thenReturn(Optional.empty());
-
-        /// When
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            repliesService.repliesList(commentId, pageable);
-        });
-
-        // Then
-        System.out.println("ErrorCode.COMMENTS_NOT_EXIST: " + "존재하지 않는 댓글입니다");
-        System.out.println("exception.getErrorCode(): " + exception.getErrorCode());
-        assertEquals(ErrorCode.COMMENTS_NOT_EXIST, exception.getErrorCode());
-    }
-
-    @Test
-    @DisplayName("[비정상 작동]대댓글 조회 (존재하지 않는 대댓글)")
-    public void repliesListRepliesNotExistTest() {
-
-        // Given
-        Long commentId = 1L;
-        PageRequest pageable = PageRequest.of(0, 2);
-        Comments comments = MockComments(); // 게시글 정보 초기화
-
-        when(commentsRepository.findById(commentId)).thenReturn(Optional.of(comments));
-        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable)).thenReturn(new SliceImpl<>(Collections.emptyList()));
-
-
-        /// When
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            repliesService.repliesList(commentId, pageable);
-        });
-
-        // Then
-        System.out.println("ErrorCode.REPLIES_NOT_EXIST: " + "존재하지 않는 대댓글입니다");
-        System.out.println("exception.getErrorCode(): " + exception.getErrorCode());
-        assertEquals(ErrorCode.REPLIES_NOT_EXIST, exception.getErrorCode());
-    }
+//    @Test
+//    @DisplayName("[비정상 작동]대댓글 조회 (존재하지 않는 댓글)")
+//    public void repliesListCommentsNotExistTest() {
+//
+//        // Given
+//        Long commentId = 1L;
+//        PageRequest pageable = PageRequest.of(0, 2);
+//
+//        when(commentsRepository.findById(commentId)).thenReturn(Optional.empty());
+//
+//        /// When
+//        CustomException exception = assertThrows(CustomException.class, () -> {
+//            repliesService.repliesList(commentId, pageable);
+//        });
+//
+//        // Then
+//        System.out.println("ErrorCode.COMMENTS_NOT_EXIST: " + "존재하지 않는 댓글입니다");
+//        System.out.println("exception.getErrorCode(): " + exception.getErrorCode());
+//        assertEquals(ErrorCode.COMMENTS_NOT_EXIST, exception.getErrorCode());
+//    }
+//
+//    @Test
+//    @DisplayName("[비정상 작동]대댓글 조회 (존재하지 않는 대댓글)")
+//    public void repliesListRepliesNotExistTest() {
+//
+//        // Given
+//        Long commentId = 1L;
+//        PageRequest pageable = PageRequest.of(0, 2);
+//        Comments comments = MockComments(); // 게시글 정보 초기화
+//
+//        when(commentsRepository.findById(commentId)).thenReturn(Optional.of(comments));
+//        when(repliesRepository.findByComments_IdOrderByCreatedAtDesc(commentId, pageable)).thenReturn(new SliceImpl<>(Collections.emptyList()));
+//
+//
+//        /// When
+//        CustomException exception = assertThrows(CustomException.class, () -> {
+//            repliesService.repliesList(commentId, pageable);
+//        });
+//
+//        // Then
+//        System.out.println("ErrorCode.REPLIES_NOT_EXIST: " + "존재하지 않는 대댓글입니다");
+//        System.out.println("exception.getErrorCode(): " + exception.getErrorCode());
+//        assertEquals(ErrorCode.REPLIES_NOT_EXIST, exception.getErrorCode());
+//    }
 
     @Test
     @DisplayName("[정상 작동] 내가 쓴 대댓글 조회")

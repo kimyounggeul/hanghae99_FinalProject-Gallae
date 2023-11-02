@@ -2,12 +2,16 @@ package com.sparta.team2project.comments;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.team2project.comments.controller.CommentsController;
+import com.sparta.team2project.comments.dto.CommentsMeResponseDto;
 import com.sparta.team2project.comments.dto.CommentsRequestDto;
 import com.sparta.team2project.comments.dto.CommentsResponseDto;
 import com.sparta.team2project.comments.entity.Comments;
 import com.sparta.team2project.commons.config.WebSecurityConfig;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
+import com.sparta.team2project.posts.entity.Posts;
+import com.sparta.team2project.replies.dto.RepliesResponseDto;
+import com.sparta.team2project.replies.entity.Replies;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -110,9 +115,12 @@ class CommentsControllerTest {
         Comments comments1 = new Comments();
         Comments comments2 = new Comments();
 
+        List<RepliesResponseDto> repliesList1 = new ArrayList<>();
+        List<RepliesResponseDto> repliesList2 = new ArrayList<>();
+
         List<CommentsResponseDto> responseDto = Arrays.asList(
-                new CommentsResponseDto(comments1),
-                new CommentsResponseDto(comments2)
+                new CommentsResponseDto(comments1, repliesList1),
+                new CommentsResponseDto(comments2, repliesList2)
         );
 
         // eq : 특정한 값을 기대하는 경우에 사용됨
@@ -138,9 +146,12 @@ class CommentsControllerTest {
         Comments comments1 = new Comments();
         Comments comments2 = new Comments();
 
-        List<CommentsResponseDto> responseDto = Arrays.asList(
-                new CommentsResponseDto(comments1),
-                new CommentsResponseDto(comments2)
+        Posts posts1 = new Posts();
+        Posts posts2 = new Posts();
+
+        List<CommentsMeResponseDto> responseDto = Arrays.asList(
+                new CommentsMeResponseDto(comments1, posts1.getTitle()),
+                new CommentsMeResponseDto(comments2, posts2.getTitle())
         );
 
         // eq : 특정한 값을 기대하는 경우에 사용됨
