@@ -2,7 +2,7 @@ name: Gallae
 
 on:
   pull_request:
-    branches: [ "main"]
+    branches: [ "develop2"]
     types:
       - closed
 
@@ -33,9 +33,9 @@ jobs:
 
 
     - uses: actions/checkout@v3
-    - run: touch ./src/main/resources/application.properties
-    - run: echo "${{secrets.APPLICATION}}" > ./src/main/resources/application.properties
-    - run: cat ./src/main/resources/application.properties
+    - run: touch ./src/main/resources/application-server.properties
+    - run: echo "${{secrets.APPLICATION}}" > ./src/main/resources/application-server.properties
+    - run: cat ./src/main/resources/application-server.properties
 
         # gradlew 실행 권한 부여
     - name: Run chmod to make gradlew executable
