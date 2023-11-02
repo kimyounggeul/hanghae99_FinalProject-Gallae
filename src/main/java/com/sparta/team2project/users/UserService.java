@@ -192,6 +192,14 @@ public class UserService {
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
     }
 
+    //로그아웃 기능
+    public ResponseEntity<MessageResponseDto> logout(String email, HttpServletResponse response) {
+        // 리프레시 토큰 삭제
+        redisUtil.deleteRefreshToken(email);
+
+        return ResponseEntity.ok(new MessageResponseDto("로그아웃 완료", HttpStatus.OK.value()));
+    }
+
     // 랜덤 닉네임 생성 메서드
     public String createRandomNickName() {
         String[] nickName =
@@ -213,4 +221,5 @@ public class UserService {
         }
         throw new CustomException(ErrorCode.RANDOM_NICKNAME_FAIL);
     }
+
 }
