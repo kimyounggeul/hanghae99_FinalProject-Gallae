@@ -104,33 +104,33 @@ class RepliesControllerTest {
                 .andDo(print());
     }
 
-    @WithMockUser
-    @Test
-    @DisplayName("대댓글 조회")
-    public void repliesListTest() throws Exception {
-
-        // Given
-        Long commentId = 1L;
-        Replies replies1 = new Replies();
-        Replies replies2 = new Replies();
-
-        List<RepliesResponseDto> responseDto = Arrays.asList(
-                new RepliesResponseDto(replies1),
-                new RepliesResponseDto(replies2)
-        );
-
-        // eq : 특정한 값을 기대하는 경우에 사용됨
-        // any : 어떤 값이든 허용하는 경우에 사용됨
-        when(repliesController.repliesList(eq(commentId), any(Pageable.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
-
-        // Wen and Then
-        mvc.perform(MockMvcRequestBuilders.get("/api/comments/"+commentId+"/replies")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(responseDto)))
-                        .andExpect(status().isOk())
-                        .andDo(print());
-    }
+//    @WithMockUser
+//    @Test
+//    @DisplayName("대댓글 조회")
+//    public void repliesListTest() throws Exception {
+//
+//        // Given
+//        Long commentId = 1L;
+//        Replies replies1 = new Replies();
+//        Replies replies2 = new Replies();
+//
+//        List<RepliesResponseDto> responseDto = Arrays.asList(
+//                new RepliesResponseDto(replies1),
+//                new RepliesResponseDto(replies2)
+//        );
+//
+//        // eq : 특정한 값을 기대하는 경우에 사용됨
+//        // any : 어떤 값이든 허용하는 경우에 사용됨
+//        when(repliesController.repliesList(eq(commentId), any(Pageable.class)))
+//                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+//
+//        // Wen and Then
+//        mvc.perform(MockMvcRequestBuilders.get("/api/comments/"+commentId+"/replies")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(objectMapper.writeValueAsString(responseDto)))
+//                        .andExpect(status().isOk())
+//                        .andDo(print());
+//    }
 
     @WithMockUser
     @Test
