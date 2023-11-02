@@ -2,7 +2,7 @@ name: Gallae
 
 on:
   pull_request:
-    branches: [ "main"]
+    branches: [ "develop2"]
     types:
       - closed
 
