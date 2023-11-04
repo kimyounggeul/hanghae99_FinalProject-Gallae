@@ -1,5 +1,6 @@
 //package com.sparta.team2project.users;
 //
+//import com.sparta.team2project.commons.Util.RedisUtil;
 //import com.sparta.team2project.commons.dto.MessageResponseDto;
 //import com.sparta.team2project.commons.entity.UserRoleEnum;
 //import com.sparta.team2project.commons.exceptionhandler.CustomException;
@@ -12,6 +13,7 @@
 //import com.sparta.team2project.users.dto.LoginRequestDto;
 //import com.sparta.team2project.users.dto.SignupRequestDto;
 //import jakarta.servlet.http.HttpServletResponse;
+//import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Nested;
 //import org.junit.jupiter.api.Test;
@@ -19,10 +21,12 @@
 //import org.mockito.InjectMocks;
 //import org.mockito.Mock;
 //import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.boot.test.autoconfigure.data.redis.DataRedisTest;
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.security.crypto.password.PasswordEncoder;
 //import org.springframework.test.context.junit.jupiter.SpringExtension;
+//import org.springframework.util.Assert;
 //
 //import java.lang.reflect.Field;
 //import java.time.LocalTime;
@@ -35,6 +39,7 @@
 //import static org.mockito.Mockito.*;
 //
 //@ExtendWith(SpringExtension.class)
+//@DataRedisTest
 //class UserServiceTest {
 //
 //    @InjectMocks
@@ -45,12 +50,14 @@
 //    private PasswordEncoder passwordEncoder;
 //    @Mock
 //    private ProfileRepository profileRepository;
-////    @Mock
-////    private ValidNumberRepository validNumberRepository;
+//
 //    @Mock
 //    private EmailService emailService;
 //    @Mock
 //    private JwtUtil jwtUtil;
+//    @Mock
+//    private RedisUtil redisUtil;
+//
 //
 //    @Value("${ADMIN_TOKEN}")
 //    private String ADMIN_TOKEN;
@@ -115,168 +122,184 @@
 //    @Nested
 //    @DisplayName("이메일 인증")
 //    class CheckEmail {
+//
+//        @BeforeEach
+//        void setUp() {
+//            // RedisUtil이 모의 객체(Mock)로 주입되었는지 확인합니다.
+//            Assert.notNull(redisUtil, "redisUtil should not be null");
+//        }
 //        @Test
 //        @DisplayName("이메일 인증 성공")
 //        void checkEmail_success() {
 //            // 가상의 이메일
 //            String email = "test@test.com";
+//            int expectedNumber = 123456; // 예상 인증번호
 //
-//            // UserRepository에 해당 이메일 존재 x
-//            when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-//            // ValidNumberRepository에서 번호가 존재하지 않도록 설정
-//            when(validNumberRepository.findByEmail(email)).thenReturn(Optional.empty());
+//            // Redis에 저장될 데이터
+//            String redisKey = "test@test.com";
+//            String redisValue = String.valueOf(expectedNumber);
+//
+//            // RedisUtil의 setDataExpire 메서드가 모의(Mock)로 동작하도록 설정
+//            // RedisUtil의 setDataExpire 메서드가 모의(Mock)로 동작하도록 설정
+//            doNothing().when(redisUtil).setDataExpire(eq(redisKey), eq(redisValue), anyLong());
+//
+//
+//            // emailService의 sendNumber 메서드가 모의(Mock)로 동작하도록 설정
+//            doNothing().when(emailService).sendNumber(eq(expectedNumber), eq(email));
 //
 //            // 메서드 호출
 //            ResponseEntity<MessageResponseDto> response = userService.checkEmail(email);
 //
-//            // 응답 확인 - 중복 없음, 이전 번호 없음
+//            // 응답 확인 - 인증번호가 발송되었음
+//            verify(redisUtil).setDataExpire(eq(redisKey), eq(redisValue), anyLong()); // RedisUtil 메서드가 호출되었는지 확인
+//            verify(emailService).sendNumber(eq(expectedNumber), eq(email)); // emailService 메서드가 호출되었는지 확인
 //            assertEquals(HttpStatus.OK, response.getStatusCode());
 //            assertEquals("인증번호가 발송되었습니다.", response.getBody().getMsg());
 //        }
 //
-//        @Test
-//        @DisplayName("이메일 인증 실패 - 중복 이메일")
-//        void checkEmail_fail_duplicate_email() {
-//            // 이메일 설정
-//            String email = "duplicate@test.com";
-//
-//            // UserRepository에서 해당 이메일이 이미 존재함
-//            when(userRepository.findByEmail(email)).thenReturn(Optional.of(new Users()));
-//            // ValidNumberRepository에서 이전 번호가 존재x
-//            when(validNumberRepository.findByEmail(email)).thenReturn(Optional.empty());
-//
-//            // 메서드 호출, 예외 발생 확인
-//            CustomException exception = assertThrows(CustomException.class, () -> userService.checkEmail(email));
-//            assertEquals(ErrorCode.DUPLICATED_EMAIL, exception.getErrorCode());
-//        }
-//
-//        @Test
-//        @DisplayName("이메일 인증 실패 - 잘못된 이메일 형식")
-//        void checkEmail_fail_wrong_email_format() {
-//            // 이메일을 null로 설정
-//            String email = null;
-//
-//            // UserRepository와 ValidNumberRepository에서 해당 이메일을 찾지 않도록 설정
-//            when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-//            when(validNumberRepository.findByEmail(email)).thenReturn(Optional.empty());
-//
-//            // 메서드 호출시 예외가 발생하는지 확인
-//            CustomException exception = assertThrows(CustomException.class, () -> userService.checkEmail(email));
-//
-//            // 예외에 올바른 ErrorCode가 설정되었는지 확인
-//            assertEquals(ErrorCode.EMAIL_FORMAT_WRONG, exception.getErrorCode());
-//        }
+////        @Test
+////        @DisplayName("이메일 인증 실패 - 중복 이메일")
+////        void checkEmail_fail_duplicate_email() {
+////            // 이메일 설정
+////            String email = "duplicate@test.com";
+////
+////            // UserRepository에서 해당 이메일이 이미 존재함
+////            when(userRepository.findByEmail(email)).thenReturn(Optional.of(new Users()));
+////            // ValidNumberRepository에서 이전 번호가 존재x
+////            when(validNumberRepository.findByEmail(email)).thenReturn(Optional.empty());
+////
+////            // 메서드 호출, 예외 발생 확인
+////            CustomException exception = assertThrows(CustomException.class, () -> userService.checkEmail(email));
+////            assertEquals(ErrorCode.DUPLICATED_EMAIL, exception.getErrorCode());
+////        }
+////
+////        @Test
+////        @DisplayName("이메일 인증 실패 - 잘못된 이메일 형식")
+////        void checkEmail_fail_wrong_email_format() {
+////            // 이메일을 null로 설정
+////            String email = null;
+////
+////            // UserRepository와 ValidNumberRepository에서 해당 이메일을 찾지 않도록 설정
+////            when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+////            when(validNumberRepository.findByEmail(email)).thenReturn(Optional.empty());
+////
+////            // 메서드 호출시 예외가 발생하는지 확인
+////            CustomException exception = assertThrows(CustomException.class, () -> userService.checkEmail(email));
+////
+////            // 예외에 올바른 ErrorCode가 설정되었는지 확인
+////            assertEquals(ErrorCode.EMAIL_FORMAT_WRONG, exception.getErrorCode());
+////        }
 //
 //    }
 //
 //
-//    @Nested
-//    @DisplayName("인증번호 확인")
-//    class CheckValidNumber {
-//        @Test
-//        @DisplayName("인증번호 확인 성공")
-//        void checkValidNumber_success() throws NoSuchFieldException, IllegalAccessException {
-//            // Given
-//            int validNumberToCheck = 123456; // 원하는 인증번호
-//            ValidNumber validNumber = new ValidNumber(validNumberToCheck, "example@example.com", 123456);
-//            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
-//
-//            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
-//
-//            // 현재 시간을 가져온다 (ValidNumber 생성 시간과 같은 값을 사용)
-//            LocalTime now = LocalTime.parse("12:34:56"); // 예시 시간
-//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
-//            long formattedNow = Long.parseLong(now.format(formatter));
-//
-//            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
-//            validNumberField.setAccessible(true);
-//            validNumberField.set(requestDto, validNumberToCheck);
-//
-//            // When
-//            boolean result = userService.checkValidNumber(requestDto, "example@example.com");
-//
-//            // Then
-//            assertTrue(result);
-//        }
-//
-//        @Test
-//        @DisplayName("인증번호 확인 실패 - 이메일로 인증번호를 찾을 수 없음")
-//        void checkValidNumber_fail_invalid_token() throws NoSuchFieldException, IllegalAccessException {
-//            // Given
-//            int validNumberToCheck = 123456; // 올바른 인증번호
-//            // validNumberRepository.findByEmail(email)가 빈 Optional을 반환하도록 설정
-//            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-//
-//            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
-//            // requestDto에 올바른 인증번호 설정
-//            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
-//            validNumberField.setAccessible(true);
-//            validNumberField.set(requestDto, validNumberToCheck);
-//
-//            // When
-//            // 인증번호 확인 메서드를 호출하면 예외가 발생해야 합니다.
-//            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
-//
-//            // Then
-//            assertEquals(ErrorCode.INVALID_VALID_TOKEN, exception.getErrorCode());
-//        }
-//
-//        @Test
-//        @DisplayName("인증번호 확인 실패 - 인증번호 유효 시간 초과")
-//        void checkValidNumber_fail_expired_token() throws NoSuchFieldException, IllegalAccessException {
-//            // Given
-//            int validNumberToCheck = 123456; // 원하는 인증번호
-//
-//            ValidNumber validNumber = new ValidNumber(123456, "example@example.com", 123456);
-//            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
-//
-//            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
-//            // requestDto에 올바르지 않은 인증번호 설정
-//            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
-//            validNumberField.setAccessible(true);
-//            validNumberField.set(requestDto, validNumberToCheck);
-//            // 시간을 현재 시간보다 3분 뒤로 설정 (유효 시간 초과)
-//            LocalTime now = LocalTime.now().plusMinutes(3);
-//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
-//            long formattedNow = Long.parseLong(now.format(formatter));
-//
-//            // Create a mock object for validNumberRepository
-//            ValidNumberRepository validNumberRepository = mock(ValidNumberRepository.class);
-//
-//            // Make sure validNumberEmail.isPresent() returns true
-//            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(new ValidNumber(0, "", 0))); // 빈 Optional을 반환하도록 설정
-//
-//            // Try to catch the exception
-//            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
-//
-//            // Verify that the expected exception was thrown
-//            assertEquals(ErrorCode.VALID_TIME_OVER, exception.getErrorCode());
-//        }
-//
-//        @Test
-//        @DisplayName("인증번호 확인 실패 - 인증번호가 일치하지 않음")
-//        void checkValidNumber_fail_wrong_number() throws NoSuchFieldException, IllegalAccessException {
-//            // Given
-//            int validNumberToCheck = 654321; // 원하는 인증번호 (올바르지 않은 번호로 설정)
-//
-//            ValidNumber validNumber = new ValidNumber(123456, "example@example.com", 123456);
-//            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
-//
-//            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
-//            // requestDto에 올바르지 않은 인증번호 설정
-//            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
-//            validNumberField.setAccessible(true);
-//            validNumberField.set(requestDto, validNumberToCheck);
-//
-//            // When
-//            // 인증번호 확인 메서드를 호출하면 예외가 발생해야 합니다.
-//            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
-//
-//            // Then
-//            assertEquals(ErrorCode.WRONG_NUMBER, exception.getErrorCode());
-//
-//        }
-//    }
+////    @Nested
+////    @DisplayName("인증번호 확인")
+////    class CheckValidNumber {
+////        @Test
+////        @DisplayName("인증번호 확인 성공")
+////        void checkValidNumber_success() throws NoSuchFieldException, IllegalAccessException {
+////            // Given
+////            int validNumberToCheck = 123456; // 원하는 인증번호
+////            ValidNumber validNumber = new ValidNumber(validNumberToCheck, "example@example.com", 123456);
+////            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
+////
+////            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
+////
+////            // 현재 시간을 가져온다 (ValidNumber 생성 시간과 같은 값을 사용)
+////            LocalTime now = LocalTime.parse("12:34:56"); // 예시 시간
+////            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+////            long formattedNow = Long.parseLong(now.format(formatter));
+////
+////            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
+////            validNumberField.setAccessible(true);
+////            validNumberField.set(requestDto, validNumberToCheck);
+////
+////            // When
+////            boolean result = userService.checkValidNumber(requestDto, "example@example.com");
+////
+////            // Then
+////            assertTrue(result);
+////        }
+////
+////        @Test
+////        @DisplayName("인증번호 확인 실패 - 이메일로 인증번호를 찾을 수 없음")
+////        void checkValidNumber_fail_invalid_token() throws NoSuchFieldException, IllegalAccessException {
+////            // Given
+////            int validNumberToCheck = 123456; // 올바른 인증번호
+////            // validNumberRepository.findByEmail(email)가 빈 Optional을 반환하도록 설정
+////            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+////
+////            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
+////            // requestDto에 올바른 인증번호 설정
+////            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
+////            validNumberField.setAccessible(true);
+////            validNumberField.set(requestDto, validNumberToCheck);
+////
+////            // When
+////            // 인증번호 확인 메서드를 호출하면 예외가 발생해야 합니다.
+////            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
+////
+////            // Then
+////            assertEquals(ErrorCode.INVALID_VALID_TOKEN, exception.getErrorCode());
+////        }
+////
+////        @Test
+////        @DisplayName("인증번호 확인 실패 - 인증번호 유효 시간 초과")
+////        void checkValidNumber_fail_expired_token() throws NoSuchFieldException, IllegalAccessException {
+////            // Given
+////            int validNumberToCheck = 123456; // 원하는 인증번호
+////
+////            ValidNumber validNumber = new ValidNumber(123456, "example@example.com", 123456);
+////            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
+////
+////            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
+////            // requestDto에 올바르지 않은 인증번호 설정
+////            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
+////            validNumberField.setAccessible(true);
+////            validNumberField.set(requestDto, validNumberToCheck);
+////            // 시간을 현재 시간보다 3분 뒤로 설정 (유효 시간 초과)
+////            LocalTime now = LocalTime.now().plusMinutes(3);
+////            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+////            long formattedNow = Long.parseLong(now.format(formatter));
+////
+////            // Create a mock object for validNumberRepository
+////            ValidNumberRepository validNumberRepository = mock(ValidNumberRepository.class);
+////
+////            // Make sure validNumberEmail.isPresent() returns true
+////            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(new ValidNumber(0, "", 0))); // 빈 Optional을 반환하도록 설정
+////
+////            // Try to catch the exception
+////            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
+////
+////            // Verify that the expected exception was thrown
+////            assertEquals(ErrorCode.VALID_TIME_OVER, exception.getErrorCode());
+////        }
+////
+////        @Test
+////        @DisplayName("인증번호 확인 실패 - 인증번호가 일치하지 않음")
+////        void checkValidNumber_fail_wrong_number() throws NoSuchFieldException, IllegalAccessException {
+////            // Given
+////            int validNumberToCheck = 654321; // 원하는 인증번호 (올바르지 않은 번호로 설정)
+////
+////            ValidNumber validNumber = new ValidNumber(123456, "example@example.com", 123456);
+////            when(validNumberRepository.findByEmail(anyString())).thenReturn(Optional.of(validNumber));
+////
+////            ValidNumberRequestDto requestDto = new ValidNumberRequestDto();
+////            // requestDto에 올바르지 않은 인증번호 설정
+////            Field validNumberField = ValidNumberRequestDto.class.getDeclaredField("validNumber");
+////            validNumberField.setAccessible(true);
+////            validNumberField.set(requestDto, validNumberToCheck);
+////
+////            // When
+////            // 인증번호 확인 메서드를 호출하면 예외가 발생해야 합니다.
+////            CustomException exception = assertThrows(CustomException.class, () -> userService.checkValidNumber(requestDto, "example@example.com"));
+////
+////            // Then
+////            assertEquals(ErrorCode.WRONG_NUMBER, exception.getErrorCode());
+////
+////        }
+////    }
 //
 //
 //    @Nested
