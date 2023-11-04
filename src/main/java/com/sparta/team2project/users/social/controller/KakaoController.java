@@ -29,6 +29,8 @@ public class KakaoController {
     @GetMapping("/kakao/callback")
     public ResponseEntity<String> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         // 리프레시 토큰을 받기 위해 tokenDto 생성
+        System.out.println(code);
+        System.out.println("카카오 컨트롤러 시작");
         TokenDto tokenDto = kakaoService.kakaoLogin(code, response);
 
         return ResponseEntity.ok("성공");

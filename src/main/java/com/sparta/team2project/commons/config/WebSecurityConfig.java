@@ -102,7 +102,7 @@ public class WebSecurityConfig {
 //                                .requestMatchers(HttpMethod.GET, "/api/schedules/**").permitAll()
                                 .requestMatchers(HttpMethod.GET).permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
-                                .requestMatchers("https://kapi.kakao.com", "/v2/user/me", "http://localhost:8080/api/users/kakao/callback/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
+                                .requestMatchers("https://kapi.kakao.com", "/v2/user/me", "/kakao/callback/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
 
                                 .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
