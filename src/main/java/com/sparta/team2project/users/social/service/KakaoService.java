@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Random;
 import java.util.UUID;
 
 @Slf4j(topic = "Kakao Login")
@@ -135,7 +136,6 @@ public class KakaoService {
         // DB 에 중복된 Kakao Id 가 있는지 확인
         Long kakaoId = kakaoUserInfo.getId();
         Users kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
-        try{
             if (kakaoUser == null) {
                 // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
                 String kakaoEmail = kakaoUserInfo.getEmail();
@@ -146,19 +146,25 @@ public class KakaoService {
                     kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
                 } else {
                     // 신규 회원가입
+                    String email = kakaoUserInfo.getEmail();
+                    int leftLimit = 97; // letter 'a'
+                    int rightLimit = 122; // letter 'z'
+                    int targetStringLength = 8;
+                    Random random = new Random();
+                    String nickname = random.ints(leftLimit, rightLimit + 1)
+                            .limit(targetStringLength)
+                            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                            .toString();
+
+                    // 신규 회원가입
                     String password = UUID.randomUUID().toString();
                     String encodedPassword = passwordEncoder.encode(password);
-
                     // email: kakao email
-                    String email = kakaoUserInfo.getEmail();
-
+//                    String email = kakaoUserInfo.getEmail();
                     kakaoUser = new Users(kakaoUserInfo.getNickname(), encodedPassword, email, UserRoleEnum.USER, kakaoId);
                 }
                 userRepository.save(kakaoUser);
             }
-        }catch(Exception e){
-            throw new RuntimeException(e+"카카오 저장오류");
-        }
         return kakaoUser;
     }
 }
