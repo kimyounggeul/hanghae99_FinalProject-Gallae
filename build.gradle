@@ -44,7 +44,6 @@ dependencies {
 	testImplementation "org.testcontainers:testcontainers:1.15.3"
 	testImplementation "org.testcontainers:junit-jupiter:1.15.3"
 	testImplementation "org.testcontainers:localstack:1.15.3"
-	implementation 'commons-io:commons-io:2.14.0'
 	testImplementation("cloud.localstack:localstack-utils:0.2.20")
 	implementation 'org.slf4j:slf4j-api:2.0.9'
 	implementation 'com.github.docker-java:docker-java:3.3.3'
@@ -104,6 +103,13 @@ dependencies {
 	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+	// Scalr
+	implementation 'se.digiplant:play-scalr_2.11:1.1.2'
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.6'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+	implementation 'commons-fileupload:commons-fileupload:1.5'
+	implementation 'commons-io:commons-io:2.15.0'
 
 
 	//SpringBoot Test

@@ -9,13 +9,14 @@ import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
-import com.sparta.team2project.profile.dto.*;
+import com.sparta.team2project.profile.dto.AboutMeRequestDto;
+import com.sparta.team2project.profile.dto.PasswordRequestDto;
+import com.sparta.team2project.profile.dto.ProfileNickNameRequestDto;
+import com.sparta.team2project.profile.dto.ProfileResponseDto;
 import com.sparta.team2project.s3.CustomMultipartFile;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import lombok.RequiredArgsConstructor;
-import marvin.image.MarvinImage;
-import org.marvinproject.image.transform.scale.Scale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -81,15 +83,13 @@ public class ProfileService {
         String picturesName = file.getOriginalFilename();
         String picturesURL = "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com" + "/" + "profileImg" + "/" + picturesName;
         String pictureContentType = file.getContentType();
-        String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
         // 3. 이미지 사이즈 재조정
-//        MultipartFile resizedImage = resizer(picturesName, fileFormatName, file, 50);
-        Long pictureSize = file.getSize();  // 단위: KBytes
+        MultipartFile resizedImage = resizer(file, 96, 96);
         // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(pictureContentType);
-        metadata.setContentLength(pictureSize);
-        try (InputStream inputStream = file.getInputStream()) {
+        metadata.setContentType(resizedImage.getContentType());
+        metadata.setContentLength(resizedImage.getSize());
+        try (InputStream inputStream = resizedImage.getInputStream()) {
             amazonS3Client.putObject(new PutObjectRequest(bucket + "/profileImg", picturesName, inputStream, metadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead));
         } catch (IOException e) {
@@ -120,32 +120,46 @@ public class ProfileService {
 
 
     @Transactional
-    public MultipartFile resizer(String fileName, String fileFormat, MultipartFile originalImage, int width) {
+    public MultipartFile resizer(MultipartFile originalImage, int targetWidth, int targetHeight) {
 
         try {
-            BufferedImage image = ImageIO.read(originalImage.getInputStream());// MultipartFile -> BufferedImage Convert
-
+            BufferedImage image = ImageIO.read(originalImage.getInputStream());
             int originWidth = image.getWidth();
             int originHeight = image.getHeight();
-
-            // origin 이미지가 400보다 작으면 패스
-            if(originWidth < width)
-                return originalImage;
-
-            MarvinImage imageMarvin = new MarvinImage(image);
-
-            Scale scale = new Scale();
-            scale.load();
-            scale.setAttribute("newWidth", width);
-            scale.setAttribute("newHeight", width);//정사각형(너비 = 높이)으로 출력
-            scale.process(imageMarvin.clone(), imageMarvin, null, null, false);
-
-            BufferedImage imageNoAlpha = imageMarvin.getBufferedImageNoAlpha();
+            System.out.println("originWidth: " + originWidth);
+            System.out.println("originHeight: " + originHeight);
+//            if (originWidth > targetWidth) {
+//                targetHeight = targetWidth*(originHeight/originWidth);
+//            }
+//            else if (originHeight > targetHeight){
+//                targetWidth = targetHeight*(originWidth/originHeight);
+//            }
+            // 이미지 품질 설정
+// Image.SCALE_DEFAULT : 기본 이미지 스케일링 알고리즘 사용
+// Image.SCALE_FAST : 이미지 부드러움보다 속도 우선
+// Image.SCALE_REPLICATE : ReplicateScaleFilter 클래스로 구체화 된 이미지 크기 조절 알고리즘
+// Image.SCALE_SMOOTH : 속도보다 이미지 부드러움을 우선
+// Image.SCALE_AREA_AVERAGING : 평균 알고리즘 사용
+            Image processedImage = image.getScaledInstance(
+                    targetWidth, targetHeight,
+                    Image.SCALE_AREA_AVERAGING
+            );
+            BufferedImage newImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics graphics = newImage.getGraphics();
+            graphics.drawImage(processedImage, 0, 0, null);
+            graphics.dispose();
+            String fileFormatName = originalImage.getContentType().substring(originalImage.getContentType().lastIndexOf("/") + 1);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(imageNoAlpha, fileFormat, baos);
+            ImageIO.write( newImage, fileFormatName, baos );
             baos.flush();
+            byte[] content = baos.toByteArray();
 
-            return new CustomMultipartFile(fileName,fileFormat,originalImage.getContentType(), baos.toByteArray());
+            return new CustomMultipartFile(
+                    originalImage.getName(),
+                    originalImage.getOriginalFilename(),
+                    originalImage.getContentType(),
+                    content
+            );
 
         } catch (IOException e) {
             throw new CustomException(ErrorCode.UNABLE_TO_CONVERT);
