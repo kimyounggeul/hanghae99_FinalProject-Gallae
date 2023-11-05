@@ -80,8 +80,10 @@ kakaoRestApiKey=
 # Redis
 spring.data.redis.host=svc.sel5.cloudtype.app
 spring.data.redis.port=
+```
 
 2. Dependencies(`build.gradle`)
+
 ```
 plugins {
 	id 'java'
