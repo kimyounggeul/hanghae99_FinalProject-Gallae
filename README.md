@@ -81,6 +81,152 @@ kakaoRestApiKey=
 spring.data.redis.host=svc.sel5.cloudtype.app
 spring.data.redis.port=
 
+2. Dependencies(`build.gradle`)
+```
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.1.4'
+	id 'io.spring.dependency-management' version '1.1.3'
+}
+
+jar {
+	enabled = false
+}
+
+group = 'com.sparta'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Adobe S3Mock
+	testImplementation 'io.findify:s3mock_2.13:0.2.6'
+
+	// JUnit5
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
+
+	// Marvin
+	implementation 'com.github.downgoon:marvin:1.5.5'
+	implementation 'com.github.downgoon:MarvinPlugins:1.5.5'
+	testImplementation 'org.springframework:spring-test:6.0.13'
+	implementation 'org.springframework:spring-web:6.0.13'
+
+	//testcontainer
+	implementation("com.amazonaws:aws-java-sdk-s3")
+	testImplementation "org.testcontainers:testcontainers:1.15.3"
+	testImplementation "org.testcontainers:junit-jupiter:1.15.3"
+	testImplementation "org.testcontainers:localstack:1.15.3"
+	testImplementation("cloud.localstack:localstack-utils:0.2.20")
+	implementation 'org.slf4j:slf4j-api:2.0.9'
+	implementation 'com.github.docker-java:docker-java:3.3.3'
+
+
+	// 소셜로그인
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// MySQL
+	implementation 'mysql:mysql-connector-java:8.0.28'
+
+	// JPA 설정
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	//SpringBoot Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.testng:testng:7.1.0'
+//	testImplementation 'repository:junit:junit'
+
+	testImplementation 'junit:junit:4.13.1'
+	testImplementation 'org.projectlombok:lombok:1.18.28'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	// JWT
+	compileOnly group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.5'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
+	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+  
+
+	// S3
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+	// aws s3
+	// 스웨거
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+
+	// Querydsl
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// Scalr
+	implementation 'se.digiplant:play-scalr_2.11:1.1.2'
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.5.6'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+	implementation 'commons-fileupload:commons-fileupload:1.5'
+	implementation 'commons-io:commons-io:2.15.0'
+
+
+	//SpringBoot Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	//SpringBoot Security Test
+	testImplementation 'org.springframework.security:spring-security-test'
+	// redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+def querydslDir = "$buildDir/generated/querydsl"
+
+sourceSets {
+	main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean.doLast {
+	file(querydslDir).deleteDir()
+}
+```
+
+
 ### 프로젝트 상세정보:
 배포된 웹 사이트: https://gallae-trip.com
 프로젝트 기획 문서(노션): https://wind-song-8bf.notion.site/2-2571118e6ef94d2082bc372fca7260d8
+
