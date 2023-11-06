@@ -2,15 +2,14 @@ package com.sparta.team2project.users;
 
 import com.sparta.team2project.comments.entity.Comments;
 import com.sparta.team2project.comments.repository.CommentsRepository;
+import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.email.EmailService;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
-import com.sparta.team2project.posts.dto.PostResponseDto;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.profile.Profile;
@@ -99,6 +98,9 @@ public class UserService {
     // 인증번호 요청
     public ResponseEntity<MessageResponseDto> checkEmail(String email) {
         // 이메일 관련 검증 및 인증번호 생성 코드는 그대로 사용
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.DUPLICATED_EMAIL);
+        }
         int number = (int) (Math.random() * 899999) + 100000; // 6자리 난수 생성(인증번호)
         // Redis를 사용하여 인증번호 저장
         redisUtil.setDataExpire(email, String.valueOf(number), 180000);
@@ -110,7 +112,9 @@ public class UserService {
     // 인증 번호 확인하기
     public boolean checkValidNumber(ValidNumberRequestDto validNumberRequestDto, String email) {
         // 이메일 관련 검증 코드는 그대로 사용
-
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.DUPLICATED_EMAIL);
+        }
         // Redis에서 인증번호 가져오기
         String storedNumber = redisUtil.getData(email);
 
