@@ -1,5 +1,6 @@
 package com.sparta.team2project.users;
 
+import com.sparta.team2project.comments.repository.CommentsRepository;
 import com.sparta.team2project.commons.Util.JwtUtil;
 import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
@@ -11,6 +12,7 @@ import com.sparta.team2project.email.dto.ValidNumberRequestDto;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
+import com.sparta.team2project.replies.repository.RepliesRepository;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -51,6 +53,10 @@ class UserServiceTest {
     private ProfileRepository profileRepository;
     @Mock
     private PostsRepository postsRepository;
+    @Mock
+    private CommentsRepository commentsRepository;
+    @Mock
+    private RepliesRepository repliesRepository;
 
     @Mock
     private EmailService emailService;
@@ -405,6 +411,8 @@ class UserServiceTest {
             when(userRepository.findByEmail(email)).thenReturn(Optional.of(users));
             when(passwordEncoder.matches(requestDto.getPassword(), users.getPassword())).thenReturn(true);
             when(profileRepository.findByUsers_Email(email)).thenReturn(Optional.of(userProfile));
+            when(commentsRepository.findByEmail(email)).thenReturn(new ArrayList<>()); // 사용자의 게시물이 없음
+            when(repliesRepository.findByEmail(email)).thenReturn(new ArrayList<>()); // 사용자의 게시물이 없음
             when(postsRepository.findByUsers(users)).thenReturn(new ArrayList<>()); // 사용자의 게시물이 없음
 
             // When
