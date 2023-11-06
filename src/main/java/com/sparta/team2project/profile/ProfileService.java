@@ -142,7 +142,7 @@ public class ProfileService {
 // Image.SCALE_AREA_AVERAGING : 평균 알고리즘 사용
             Image processedImage = image.getScaledInstance(
                     targetWidth, targetHeight,
-                    Image.SCALE_AREA_AVERAGING
+                    Image.SCALE_SMOOTH
             );
             BufferedImage newImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
             Graphics graphics = newImage.getGraphics();
