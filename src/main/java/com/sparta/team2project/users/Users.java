@@ -26,7 +26,7 @@ public class Users {
     @Column(nullable = false)
     private String nickName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Enumerated(value = EnumType.STRING)
     private UserRoleEnum userRole;
 
