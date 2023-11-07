@@ -3,6 +3,7 @@ package com.sparta.team2project.pictures;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.S3Object;
+import org.junit.Before;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -20,7 +21,8 @@ public class PicturesServiceTest {
     LocalStackContainer localStackContainer = new LocalStackContainer(LOCALSTACK_IMAGE)
             .withServices(S3);
 
-    public AmazonS3 setUp() {
+    @Before
+    public AmazonS3 setUpS3() {
         AmazonS3 amazonS3 = AmazonS3ClientBuilder
                 .standard()
                 .withEndpointConfiguration(localStackContainer.getEndpointConfiguration(S3))
@@ -30,8 +32,8 @@ public class PicturesServiceTest {
     }
 
     @Test
-    void test(){
-        AmazonS3 amazonS3 = setUp();
+    void testS3Upload(){
+        AmazonS3 amazonS3 = setUpS3();
         String bucketName = "foo";
         amazonS3.createBucket(bucketName);
         System.out.println(bucketName +" 버킷 생성");
