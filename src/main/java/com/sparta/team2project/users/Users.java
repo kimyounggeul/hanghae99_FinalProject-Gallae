@@ -51,7 +51,7 @@ public class Users {
     }
 
 
-    public Users(String email, String password, String nickName, Long kakaoId) {
+    public Users(String email, String password, String nickName,  Long kakaoId) {
         this.email = email;
         this.password = password;
         this.nickName = nickName;
