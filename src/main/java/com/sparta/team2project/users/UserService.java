@@ -14,6 +14,8 @@ import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
+import com.sparta.team2project.replies.entity.Replies;
+import com.sparta.team2project.replies.repository.RepliesRepository;
 import com.sparta.team2project.tags.entity.Tags;
 import com.sparta.team2project.tags.repository.TagsRepository;
 import com.sparta.team2project.tripdate.entity.TripDate;
@@ -43,6 +45,7 @@ public class UserService {
     private final TagsRepository tagsRepository;
     private final TripDateRepository tripDateRepository;
     private final CommentsRepository commentsRepository;
+    private final RepliesRepository repliesRepository;
 
     private final EmailService emailService;
     private final RedisUtil redisUtil;
@@ -151,6 +154,18 @@ public class UserService {
         if (userProfile != null) {
             profileRepository.delete(userProfile);
         }
+        // 사용자의 댓글 삭제
+        List<Comments> userComments = commentsRepository.findByEmail(email);
+        commentsRepository.deleteAll(userComments);
+        for (Comments comment : userComments) {
+            // 각 Comment에 달린 Replies를 모두 찾아서 삭제합니다.
+            List<Replies> repliesOnComment = comment.getRepliesList();
+            repliesRepository.deleteAll(repliesOnComment);
+        }
+        // 사용자의 대댓글 삭제
+        List<Replies> userReplies = repliesRepository.findByEmail(email);
+        repliesRepository.deleteAll(userReplies);
+        // 사용자의 게시글 삭제
         List<Posts> userPosts = postsRepository.findByUsers(users);
         if (userPosts != null) {
             for (Posts posts : userPosts) {
@@ -163,7 +178,6 @@ public class UserService {
                 postsRepository.delete(posts);
             }
         }
-
         userRepository.delete(users);
         // 리프레시 토큰 삭제
         redisUtil.deleteRefreshToken(email);
