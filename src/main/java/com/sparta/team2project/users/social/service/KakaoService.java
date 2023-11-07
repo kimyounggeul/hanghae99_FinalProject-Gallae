@@ -52,10 +52,8 @@ public class KakaoService {
         Users kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
         // 4. JWT 토큰 반환
         String accessToken = jwtUtil.createAccessToken(kakaoUser.getEmail(), kakaoUser.getUserRole());
-//        String refreshToken = jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getUserRole()); // 리프레시 토큰 추가
 
         response.setHeader(JwtUtil.ACCESS_KEY, accessToken);
-//        response.setHeader(JwtUtil.AUTHORIZATION_HEADER, refreshToken);
 
         return new TokenDto(accessToken);
     }
@@ -137,27 +135,23 @@ public class KakaoService {
         Users kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
 
         if (kakaoUser == null) {
-
             String nickname = kakaoUserInfo.getNickname();
-
             String password = UUID.randomUUID().toString();
             String encodedPassword = passwordEncoder.encode(password);
+            String email = kakaoUserInfo.getEmail();
 
-            String kakaoEmail = kakaoUserInfo.getEmail();
-
-            if(kakaoEmail != null){
-                Users sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
+            if (email != null) {
+                Users sameEmailUser = userRepository.findByEmail(email).orElse(null);
+                // 일반 가입이 되어있는 경우
                 if (sameEmailUser != null) {
                     kakaoUser = sameEmailUser;
                     kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
                 } else {
-                    String email = kakaoUserInfo.getEmail();
-                    kakaoUser = new Users(nickname, encodedPassword, email, UserRoleEnum.USER, kakaoId);
+                    // 신규 회원
+                    kakaoUser = new Users(email, nickname, encodedPassword, UserRoleEnum.USER);
+                    userRepository.save(kakaoUser);
+                    kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
                 }
-                userRepository.save(kakaoUser);
-            } else {
-                kakaoUser = new Users(nickname, encodedPassword, UserRoleEnum.USER, kakaoId);
-                userRepository.save(kakaoUser);
             }
         }
         return kakaoUser;

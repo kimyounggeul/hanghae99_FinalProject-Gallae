@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,10 +30,7 @@ public class KakaoController {
     @GetMapping("/kakao/callback")
     public ResponseEntity<String> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         // 리프레시 토큰을 받기 위해 tokenDto 생성
-        System.out.println(code);
-        System.out.println("카카오 컨트롤러 시작");
         TokenDto tokenDto = kakaoService.kakaoLogin(code, response);
-
         return ResponseEntity.ok("성공");
     }
 }
