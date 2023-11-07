@@ -28,9 +28,8 @@ public class KakaoController {
 
     @Operation(summary = "카카오 회원가입입니다", description = "카카오 회원가입 api 입니다")
     @GetMapping("/kakao/callback")
-    public ResponseEntity<String> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+    public String kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         // 리프레시 토큰을 받기 위해 tokenDto 생성
-        TokenDto tokenDto = kakaoService.kakaoLogin(code, response);
-        return ResponseEntity.ok("성공");
+        return kakaoService.kakaoLogin(code,response);
     }
 }
