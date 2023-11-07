@@ -59,12 +59,12 @@ public class Users {
         this.kakaoId = kakaoId;
     }
 
-    public Users(String password, String nickName, UserRoleEnum userRole, Long kakaoId) {
-//        this.email = email;
+    public Users(String email, String password, String nickName, UserRoleEnum userRole) {
+        this.email = email;
         this.password = password;
         this.nickName = nickName;
         this.userRole = userRole;
-        this.kakaoId = kakaoId;
+//        this.kakaoId = kakaoId;
     }
 
 
