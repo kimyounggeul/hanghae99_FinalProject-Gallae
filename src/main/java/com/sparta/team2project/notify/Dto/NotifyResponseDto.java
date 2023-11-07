@@ -1,9 +1,11 @@
 package com.sparta.team2project.notify.Dto;
 
 import com.sparta.team2project.notify.entity.Notify;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
+@Getter
 public class NotifyResponseDto {
     private Long id;
     private String content;
