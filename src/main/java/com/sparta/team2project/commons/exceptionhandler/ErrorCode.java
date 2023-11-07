@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+
     ID_NOT_MATCH(HttpStatus.BAD_REQUEST, "작성자가 일치하지 않습니다"),
     ID_NOT_FOUND(HttpStatus.NOT_FOUND, "아이디를 찾을 수 없습니다."),
     IMG_NULL(HttpStatus.BAD_REQUEST,"이미지를 찾을 수 없습니다."),
@@ -44,7 +45,10 @@ public enum ErrorCode {
     EXPIRED_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "만료된 리프레시토큰 입니다."),
     NOT_ALLOWED_TOKEN(HttpStatus.BAD_REQUEST, "지원하지 않는 토큰 형식입니다."),
     WRONG_TOKEN(HttpStatus.BAD_REQUEST, "잘못된 토큰입니다."),
-    RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다.");
+    RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다."),
+
+    //notify(알림 관련)
+    VALID_NOT_URL(HttpStatus.BAD_REQUEST, "유효하지 않은 URL 입니다");
 
 
 
