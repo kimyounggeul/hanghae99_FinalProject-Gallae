@@ -133,7 +133,6 @@ public class KakaoService {
     private Users registerKakaoUserIfNeeded(KakaoUserInfoDto kakaoUserInfo) {
         Long kakaoId = kakaoUserInfo.getId();
         Users kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
-
         if (kakaoUser == null) {
             String nickname = kakaoUserInfo.getNickname();
             String password = UUID.randomUUID().toString();
@@ -149,8 +148,8 @@ public class KakaoService {
                 } else {
                     // 신규 회원
                     kakaoUser = new Users(email, nickname, encodedPassword, UserRoleEnum.USER);
-                    userRepository.save(kakaoUser);
                     kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
+                    userRepository.save(kakaoUser);
                 }
             }
         }
