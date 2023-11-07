@@ -59,6 +59,14 @@ public class Users {
         this.kakaoId = kakaoId;
     }
 
+    public Users(String password, String nickName, UserRoleEnum userRole, Long kakaoId) {
+//        this.email = email;
+        this.password = password;
+        this.nickName = nickName;
+        this.userRole = userRole;
+        this.kakaoId = kakaoId;
+    }
+
 
     // 프로필 정보 업데이트 (닉네임)
     public void updateNickName(ProfileNickNameRequestDto requestDto) {

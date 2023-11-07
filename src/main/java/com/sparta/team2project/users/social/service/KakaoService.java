@@ -133,50 +133,33 @@ public class KakaoService {
     }
 
     private Users registerKakaoUserIfNeeded(KakaoUserInfoDto kakaoUserInfo) {
-        // DB 에 중복된 Kakao Id 가 있는지 확인
         Long kakaoId = kakaoUserInfo.getId();
         Users kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
 
         if (kakaoUser == null) {
-            // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
-            String kakaoEmail = kakaoUserInfo.getEmail();
-            Users sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
-            if (sameEmailUser != null) {
-                kakaoUser = sameEmailUser;
-                // 기존 회원정보에 카카오 Id 추가
-                kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
-            } else {
-//                // 신규 회원가입
-//                // password: random UUID
-//                String password = UUID.randomUUID().toString();
-//                String encodedPassword = passwordEncoder.encode(password);
-//
-//                // email: kakao email
-//                String email = kakaoUserInfo.getEmail();
-//                UserRoleEnum userRole = UserRoleEnum.USER;
-//
-//                kakaoUser = new Users(kakaoUserInfo.getNickname(), encodedPassword, email, userRole, kakaoId);
-//                userRepository.save(kakaoUser);
-                kakaoUser = performNormalSignup(kakaoUserInfo);
 
+            String nickname = kakaoUserInfo.getNickname();
+
+            String password = UUID.randomUUID().toString();
+            String encodedPassword = passwordEncoder.encode(password);
+
+            String kakaoEmail = kakaoUserInfo.getEmail();
+
+            if(kakaoEmail != null){
+                Users sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
+                if (sameEmailUser != null) {
+                    kakaoUser = sameEmailUser;
+                    kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
+                } else {
+                    String email = kakaoUserInfo.getEmail();
+                    kakaoUser = new Users(nickname, encodedPassword, email, UserRoleEnum.USER, kakaoId);
+                }
+                userRepository.save(kakaoUser);
+            } else {
+                kakaoUser = new Users(nickname, encodedPassword, UserRoleEnum.USER, kakaoId);
+                userRepository.save(kakaoUser);
             }
         }
         return kakaoUser;
-    }
-
-    private Users performNormalSignup(KakaoUserInfoDto kakaoUserInfo) {
-        String email = kakaoUserInfo.getEmail();
-        String password = UUID.randomUUID().toString();
-        String encodedPassword = passwordEncoder.encode(password);
-        String nickName = kakaoUserInfo.getNickname();
-        UserRoleEnum userRole = UserRoleEnum.USER;
-
-        Users newUser = new Users(nickName, encodedPassword, email, userRole, kakaoUserInfo.getId());
-        userRepository.save(newUser);
-
-        newUser = newUser.kakaoIdUpdate(kakaoUserInfo.getId());
-        userRepository.save(newUser);
-
-        return newUser;
     }
 }
