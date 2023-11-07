@@ -8,6 +8,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CommentsRepository extends JpaRepository<Comments, Long> {
 
@@ -18,5 +19,7 @@ public interface CommentsRepository extends JpaRepository<Comments, Long> {
     Slice<Comments> findByPosts_IdOrderByCreatedAtDesc(Long postId, Pageable pageable);
 
     Slice<Comments> findAllByAndEmailOrderByCreatedAtDesc(String email, Pageable pageable);
+
+    Optional<Comments> findFirstByPosts_IdOrderByCreatedAtDesc(Long postId);
 }
 

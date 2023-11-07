@@ -6,6 +6,7 @@ import com.sparta.team2project.comments.dto.CommentsResponseDto;
 import com.sparta.team2project.comments.service.CommentsService;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
+import com.sparta.team2project.notify.service.NotifyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommentsController {
     private final CommentsService commentsService;
+    private final NotifyService notifyService;
 
     // 댓글 생성
     @Operation(summary = "댓글 생성", description = "댓글 생성 api 입니다.")
@@ -29,6 +31,10 @@ public class CommentsController {
     public ResponseEntity<MessageResponseDto> commentsCreate(@PathVariable("postId") Long postId,
                                                               @RequestBody CommentsRequestDto requestDto,
                                                               @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
+        // 댓글알림 - 게시글 작성자에게
+        notifyService.notifyComments(postId);
+
         return ResponseEntity.ok(commentsService.commentsCreate(postId, requestDto, userDetails.getUsers()));
     }
 

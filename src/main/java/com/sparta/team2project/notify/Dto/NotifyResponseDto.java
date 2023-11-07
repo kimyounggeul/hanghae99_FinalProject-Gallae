@@ -1,20 +1,18 @@
 package com.sparta.team2project.notify.Dto;
 
 import com.sparta.team2project.notify.entity.Notify;
-import com.sparta.team2project.notify.entity.NotifyType;
+
+import java.time.LocalDateTime;
 
 public class NotifyResponseDto {
     private Long id;
     private String content;
-    private String url;
-    private NotifyType notifyType;
-    private Boolean isRead;
+    private LocalDateTime createAt;
+
 
     public NotifyResponseDto(Notify notify) {
         this.id = notify.getId();
-        this.content = notify.getContent();
-        this.url = String.valueOf(url);
-        this.notifyType = notify.getNotifyType();
-        this.isRead = notify.getIsRead();
+        this.content = notify.getContents();
+        this.createAt = notify.getCreatedAt();
     }
 }
