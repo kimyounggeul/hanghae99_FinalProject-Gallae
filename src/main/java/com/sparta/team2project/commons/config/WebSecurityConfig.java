@@ -1,11 +1,11 @@
 package com.sparta.team2project.commons.config;
 
 
-import com.sparta.team2project.commons.jwt.JwtUtil;
+import com.sparta.team2project.commons.Util.JwtUtil;
 
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.security.JwtAuthorizationFilter;
 import com.sparta.team2project.commons.security.UserDetailsServiceImpl;
-import com.sparta.team2project.refreshToken.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +22,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
@@ -34,7 +33,8 @@ public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
-    private final RefreshTokenRepository RefreshTokenRepository;
+    private final RedisUtil redisUtil; // RedisUtil 주입
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -49,7 +49,7 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, RefreshTokenRepository);
+        return new JwtAuthorizationFilter(jwtUtil, userDetailsService, redisUtil);
     }
 
     //Cors
@@ -57,7 +57,8 @@ public class WebSecurityConfig {
     public CorsConfigurationSource configurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://gallae-fe.vercel.app", "https://test-gallae.vercel.app"));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         //configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
@@ -101,7 +102,7 @@ public class WebSecurityConfig {
 //                                .requestMatchers(HttpMethod.GET, "/api/schedules/**").permitAll()
                                 .requestMatchers(HttpMethod.GET).permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
-                                .requestMatchers("https://kapi.kakao.com", "/v2/user/me", "http://localhost:8080/api/users/kakao/callback/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
+                                .requestMatchers("https://kapi.kakao.com", "/v2/user/me", "/kakao/callback/**").permitAll() // OpenAPI UI에 대한 엑세스 권한 허용
 
                                 .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );

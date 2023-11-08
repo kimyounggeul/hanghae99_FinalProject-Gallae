@@ -11,6 +11,8 @@ import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
+import com.sparta.team2project.replies.dto.RepliesResponseDto;
+import com.sparta.team2project.replies.entity.Replies;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import jakarta.transaction.Transactional;
@@ -40,7 +42,7 @@ public class CommentsService {
         Comments comments = new Comments(requestDto, users, posts);
         commentsRepository.save(comments);
 
-        return new MessageResponseDto ("댓글을 작성하였습니다", 200);
+        return new MessageResponseDto ("댓글", 200);
     }
 
     // 댓글 조회
@@ -59,10 +61,18 @@ public class CommentsService {
         List<CommentsResponseDto> commentsResponseDtoList = new ArrayList<>();
 
         for (Comments comments : commentsList) {
+            List<RepliesResponseDto> repliesList = new ArrayList<>();
+            for (Replies replies : comments.getRepliesList()) {
+                if (posts.getUsers().getEmail().equals(replies.getEmail())) {
+                    repliesList.add(new RepliesResponseDto(replies, "글쓴이"));
+                } else {
+                    repliesList.add(new RepliesResponseDto(replies));
+                }
+            }
             if (posts.getUsers().getEmail().equals(comments.getEmail())) {
-                commentsResponseDtoList.add(new CommentsResponseDto(comments, "글쓴이"));
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, "글쓴이", repliesList));
             } else {
-                commentsResponseDtoList.add(new CommentsResponseDto(comments));
+                commentsResponseDtoList.add(new CommentsResponseDto(comments, repliesList));
             }
         }
         return new SliceImpl<>(commentsResponseDtoList, pageable, commentsList.hasNext());

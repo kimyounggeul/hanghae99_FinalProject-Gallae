@@ -1,20 +1,25 @@
 package com.sparta.team2project.users;
 
+import com.sparta.team2project.comments.entity.Comments;
+import com.sparta.team2project.comments.repository.CommentsRepository;
+import com.sparta.team2project.commons.Util.JwtUtil;
+import com.sparta.team2project.commons.Util.RedisUtil;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.commons.jwt.JwtUtil;
 import com.sparta.team2project.email.EmailService;
-import com.sparta.team2project.email.ValidNumber.ValidNumber;
-import com.sparta.team2project.email.ValidNumber.ValidNumberRepository;
 import com.sparta.team2project.email.dto.ValidNumberRequestDto;
+import com.sparta.team2project.posts.entity.Posts;
+import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.profile.Profile;
 import com.sparta.team2project.profile.ProfileRepository;
-import com.sparta.team2project.refreshToken.RefreshToken;
-import com.sparta.team2project.refreshToken.RefreshTokenRepository;
-import com.sparta.team2project.refreshToken.TokenDto;
-import com.sparta.team2project.users.dto.CheckNickNameRequestDto;
+import com.sparta.team2project.replies.entity.Replies;
+import com.sparta.team2project.replies.repository.RepliesRepository;
+import com.sparta.team2project.tags.entity.Tags;
+import com.sparta.team2project.tags.repository.TagsRepository;
+import com.sparta.team2project.tripdate.entity.TripDate;
+import com.sparta.team2project.tripdate.repository.TripDateRepository;
 import com.sparta.team2project.users.dto.LoginRequestDto;
 import com.sparta.team2project.users.dto.SignoutRequestDto;
 import com.sparta.team2project.users.dto.SignupRequestDto;
@@ -26,8 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -37,9 +41,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
-    private final ValidNumberRepository validNumberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final PostsRepository postsRepository;
+    private final TagsRepository tagsRepository;
+    private final TripDateRepository tripDateRepository;
+    private final CommentsRepository commentsRepository;
+    private final RepliesRepository repliesRepository;
+
     private final EmailService emailService;
+    private final RedisUtil redisUtil;
+
     private final JwtUtil jwtUtil;
 
 
@@ -90,65 +100,34 @@ public class UserService {
 
     // 인증번호 요청
     public ResponseEntity<MessageResponseDto> checkEmail(String email) {
-
-        //해당 이메일로 전에 인증번호를 요청했다면 전 인증번호를 db에서 삭제함
-        Optional<ValidNumber> pastNumber = validNumberRepository.findByEmail(email);
-        if (pastNumber.isPresent()) {
-            validNumberRepository.delete(pastNumber.get());
+        // 이메일 관련 검증 및 인증번호 생성 코드는 그대로 사용
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.DUPLICATED_EMAIL);
         }
-
-        Optional<Users> checkUsers = userRepository.findByEmail(email);
-
-        if (checkUsers.isPresent()) {
-            throw new CustomException(ErrorCode.DUPLICATED_EMAIL); //이메일로 인증번호를 찾을 수 없음
-        }
-        if (email == null) {
-            throw new CustomException(ErrorCode.EMAIL_FORMAT_WRONG); // 이메일 형식이 잘못됨
-        }
-        // 인증한 이메일이 가입시 사용할 이메일이어야 함. -> 회원가입 기능에서 ValidNumber.email과 Users.email이 일치해야 함.
-
-
         int number = (int) (Math.random() * 899999) + 100000; // 6자리 난수 생성(인증번호)
-
-        LocalTime now = LocalTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss"); // 현재시간에서 HHmmss 형식으로 시간을 가져옴
-        long formatedNow = Long.parseLong(now.format(formatter));
-
-        ValidNumber validNumber = new ValidNumber(number, email, formatedNow);
-        validNumberRepository.save(validNumber);
+        // Redis를 사용하여 인증번호 저장
+        redisUtil.setDataExpire(email, String.valueOf(number), 180000);
 
         emailService.sendNumber(number, email);
         return ResponseEntity.ok((new MessageResponseDto("인증번호가 발송되었습니다.", HttpStatus.OK.value())));
     }
 
-
     // 인증 번호 확인하기
     public boolean checkValidNumber(ValidNumberRequestDto validNumberRequestDto, String email) {
-        boolean checkNumber = true;
-
-        LocalTime now = LocalTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss"); // 현재시간에서 HHmmss 형식으로 시간을 가져옴.
-        long formatedNow = Long.parseLong(now.format(formatter));
-
-        Optional<ValidNumber> validNumberEmail = validNumberRepository.findByEmail(email);
-
-        if (!validNumberEmail.isPresent()) {
-            throw new CustomException(ErrorCode.INVALID_VALID_TOKEN); //이메일로 인증번호를 찾을 수 없음
+        // 이메일 관련 검증 코드는 그대로 사용
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new CustomException(ErrorCode.DUPLICATED_EMAIL);
         }
+        // Redis에서 인증번호 가져오기
+        String storedNumber = redisUtil.getData(email);
 
-        ValidNumber validNumber = validNumberEmail.get();
-        double time = validNumber.getTime();
-
-        if (formatedNow - time >= 300) { // 인증번호 발급 받은지 3분 초과
-            throw new CustomException(ErrorCode.VALID_TIME_OVER);
-        }
-//        number != validNumber.getValidNumber()
-        if (validNumber.getValidNumber() != validNumberRequestDto.getValidNumber()) {
+        if (storedNumber == null || !storedNumber.equals(String.valueOf(validNumberRequestDto.getValidNumber()))) {
             throw new CustomException(ErrorCode.WRONG_NUMBER);
         } else {
-            return checkNumber; // 인증성공시 true 값이 반환됩니다.
+            return true; // 인증 성공시 true 값이 반환됩니다.
         }
     }
+
     // 닉네임 중복여부 체크 메서드
     public boolean checkNickName(String nickName) {
         boolean checkNickName = true;
@@ -159,15 +138,49 @@ public class UserService {
     }
 
 
-    // 회원탈퇴(연관관게 설정 필요) - 미완
+    // 회원탈퇴
     public ResponseEntity<MessageResponseDto> deleteUser(SignoutRequestDto requestDto, String email) {
-        Users users = userRepository.findByEmail(email).orElseThrow(
-                () -> new IllegalArgumentException("등록된 아이디가 없습니다.")
-        );
+        Users users = userRepository.findByEmail(email).orElseThrow(() ->
+                new CustomException(ErrorCode.ID_NOT_FOUND)); //사용자가 존재하지 않음
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비밀번호가 일치하지 않음
+        }
+        if (!requestDto.getEmail().equals(email)) {
+            throw new CustomException(ErrorCode.ID_NOT_MATCH); // 로그인한 이메일과 삭제하려는 이메일이 일치하지 않음
+        }
+        Profile userProfile = profileRepository.findByUsers_Email(email).orElseThrow(() ->
+                new CustomException(ErrorCode.EMAIL_NOT_FOUND)
+        );
+        if (userProfile != null) {
+            profileRepository.delete(userProfile);
+        }
+        // 사용자의 댓글 삭제
+        List<Comments> userComments = commentsRepository.findByEmail(email);
+        commentsRepository.deleteAll(userComments);
+        for (Comments comment : userComments) {
+            // 각 Comment에 달린 Replies를 모두 찾아서 삭제합니다.
+            List<Replies> repliesOnComment = comment.getRepliesList();
+            repliesRepository.deleteAll(repliesOnComment);
+        }
+        // 사용자의 대댓글 삭제
+        List<Replies> userReplies = repliesRepository.findByEmail(email);
+        repliesRepository.deleteAll(userReplies);
+        // 사용자의 게시글 삭제
+        List<Posts> userPosts = postsRepository.findByUsers(users);
+        if (userPosts != null) {
+            for (Posts posts : userPosts) {
+                List<Comments> relatedComments = commentsRepository.findByPosts(posts);
+                commentsRepository.deleteAll(relatedComments);
+                List<TripDate> relatedTripDates = tripDateRepository.findByPosts(posts);
+                tripDateRepository.deleteAll(relatedTripDates);
+                List<Tags> relatedTags = tagsRepository.findByPosts(posts);
+                tagsRepository.deleteAll(relatedTags);
+                postsRepository.delete(posts);
+            }
         }
         userRepository.delete(users);
+        // 리프레시 토큰 삭제
+        redisUtil.deleteRefreshToken(email);
         return ResponseEntity.ok(new MessageResponseDto("회원탈퇴 완료", HttpStatus.OK.value()));
     }
 
@@ -178,25 +191,31 @@ public class UserService {
         if (!passwordEncoder.matches(requestDto.getPassword(), users.getPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH); // 해당 이메일의 비밀번호가 일치하지 않음
         }
-        // 로그인 성공 시 액세스 토큰 및 리프레시 토큰 생성
+        // 로그인 성공 시 액세스 토큰 생성
         String accessToken = jwtUtil.createAccessToken(users.getEmail(), users.getUserRole()); // 수정: userRole 대신 userRole 사용하도록 변경
-        String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
-        Optional<RefreshToken> findRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken);
-
-        if (findRefreshToken.isPresent()) {
-            RefreshToken existingToken = findRefreshToken.get();
-            RefreshToken updateToken = existingToken.updateToken(refreshToken);
-            refreshTokenRepository.save(updateToken);
+        // Redis에 저장된 리프레시 토큰을 가져옴
+        String storedRefreshToken = redisUtil.getRefreshToken(users.getEmail());
+        if (storedRefreshToken == null) {
+            // 저장된 리프레시 토큰이 없으면 새로 생성
+            String refreshToken = jwtUtil.createRefreshToken(users.getEmail(), users.getUserRole());
+            // Redis에 새로운 리프레시 토큰 저장
+            redisUtil.saveRefreshToken(users.getEmail(), refreshToken);
+            response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
         } else {
-            RefreshToken newToken = new RefreshToken(refreshToken, requestDto.getEmail());
-            refreshTokenRepository.save(newToken);
+            // 이미 저장된 리프레시 토큰 사용
+            response.addHeader(JwtUtil.REFRESH_KEY, storedRefreshToken);
         }
-
         response.addHeader(JwtUtil.ACCESS_KEY, accessToken);
-        // 수정: 리프레시 토큰을 다시 생성하지 않고 기존 리프레시 토큰을 사용하도록 변경
-        response.addHeader(JwtUtil.REFRESH_KEY, refreshToken);
 
         return ResponseEntity.ok(new MessageResponseDto("로그인 성공", HttpStatus.OK.value()));
+    }
+
+    //로그아웃 기능
+    public ResponseEntity<MessageResponseDto> logout(String email, HttpServletResponse response) {
+        // 리프레시 토큰 삭제
+        redisUtil.deleteRefreshToken(email);
+
+        return ResponseEntity.ok(new MessageResponseDto("로그아웃 완료", HttpStatus.OK.value()));
     }
 
     // 랜덤 닉네임 생성 메서드
@@ -220,4 +239,5 @@ public class UserService {
         }
         throw new CustomException(ErrorCode.RANDOM_NICKNAME_FAIL);
     }
+
 }

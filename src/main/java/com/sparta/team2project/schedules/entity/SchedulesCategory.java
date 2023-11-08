@@ -4,12 +4,12 @@ import lombok.Getter;
 
 @Getter
 public enum SchedulesCategory {
+    식당,
     교통,
-    숙박,
-    즐길거리,
-    음식,
+    숙소,
+    쇼핑,
+    마트,
     카페,
-    명소,
-    컨텐츠
+    명소
 }
 

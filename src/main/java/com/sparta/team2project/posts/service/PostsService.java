@@ -66,7 +66,7 @@ public class PostsService {
     private String bucket;
 
     // 게시글 생성
-    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto, Users users) {
+    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto,Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
 
@@ -82,14 +82,17 @@ public class PostsService {
                 .map(tag -> new Tags(tag, posts))
                 .forEach(tagsRepository::save); // tags 저장
 
+
         List<Long> idList = new ArrayList<>();// tripDateID 담는 리스트
         List<TripDateOnlyRequestDto> tripDateRequestDtoList = totalRequestDto.getTripDateList();
-        for (TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList) {
-            TripDate tripDate = new TripDate(tripDateRequestDto, posts);
-            tripDateRepository.save(tripDate); // tripDate 저장
-            idList.add(tripDate.getId());
-        }
-        return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK, posts, idList);
+        if(totalRequestDto.getTripDateList() != null && !totalRequestDto.getTripDateList().isEmpty()){
+            for(TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList){
+                TripDate tripDate = new TripDate(tripDateRequestDto,posts);
+                tripDateRepository.save(tripDate); // tripDate 저장
+                idList.add(tripDate.getId());
+            }
+            return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK,posts,idList);
+        } else {return  new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK,posts);}
     }
 
     // 단일 게시물 조회
@@ -106,6 +109,7 @@ public class PostsService {
     }
 
     // 게시글 전체 조회
+    @Transactional(readOnly = true)
     public Slice<PostResponseDto> getAllPosts(int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
@@ -121,6 +125,7 @@ public class PostsService {
     }
 
     // 사용자별 게시글 전체 조회
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getUserPosts(Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
@@ -141,6 +146,7 @@ public class PostsService {
     }
 
     // 키워드 검색
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getKeywordPosts(String keyword) {
 
         if (keyword == null || keyword.isEmpty()) { // 키워드가 null값인 경우
@@ -164,6 +170,7 @@ public class PostsService {
     }
 
     // 랭킹 목록 조회(상위 10개)
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getRankPosts() {
 
         // 상위 10개 게시물 가져오기 (좋아요 수 겹칠 시 createdAt 내림차순으로 정렬)
@@ -172,6 +179,7 @@ public class PostsService {
     }
 
     // 사용자가 좋아요 누른 게시물 조회
+    @Transactional(readOnly = true)
     public Page<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
@@ -189,6 +197,7 @@ public class PostsService {
     }
 
     // 사용자가 좋아요 누른 게시물 id만 조회
+    @Transactional(readOnly = true)
     public List<Long> getUserLikePostsId(Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
@@ -358,8 +367,8 @@ public class PostsService {
             String postsPictureContentType = file.getContentType();
             String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
             // 2. 이미지 리사이즈 함수 호출
-            MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 300);
-            Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+//            MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 300);
+            Long postsPictureSize = file.getSize();  // 단위: KBytes
             // 3. Repository에 파일 정보를 저장하기 위해 PicturesList에 저장(schedulesId 필요)
             Posts posts = postsRepository.findById(postId).orElseThrow(
                     () -> new CustomException(ErrorCode.ID_NOT_MATCH)
@@ -369,9 +378,9 @@ public class PostsService {
             checkPostsPicturesList.add(postsPictures);
             // 4. 사진을 메타데이터 및 정보와 함께 S3에 저장
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(resizedImage.getContentType());
-            metadata.setContentLength(resizedImage.getSize());
-            try (InputStream inputStream = resizedImage.getInputStream()) {
+            metadata.setContentType(postsPictureContentType);
+            metadata.setContentLength(postsPictureSize);
+            try (InputStream inputStream = file.getInputStream()) {
                 amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
                         .withCannedAcl(CannedAccessControlList.PublicRead));
             } catch (IOException e) {
@@ -460,15 +469,15 @@ public class PostsService {
         String postsPictureContentType = file.getContentType();
         String fileFormatName = file.getContentType().substring(file.getContentType().lastIndexOf("/") + 1);
         // 2. 이미지 사이즈 재조정
-        MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
-        Long postsPictureSize = resizedImage.getSize();  // 단위: KBytes
+//        MultipartFile resizedImage = resizer(postsPicturesName, fileFormatName, file, 250);
+        Long postsPictureSize = file.getSize();  // 단위: KBytes
         postsPictures.updatePostsPictures(postsPicturesURL, postsPicturesName, postsPictureContentType, postsPictureSize);
         postsPicturesRepository.save(postsPictures);
         // 3. 사진을 메타데이터 및 정보와 함께 S3에 저장
         ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType(resizedImage.getContentType());
-        metadata.setContentLength(resizedImage.getSize());
-        try (InputStream inputStream = resizedImage.getInputStream()) {
+        metadata.setContentType(postsPictureContentType);
+        metadata.setContentLength(postsPictureSize);
+        try (InputStream inputStream = file.getInputStream()) {
             amazonS3Client.putObject(new PutObjectRequest(bucket + "/postsPictures", postsPicturesName, inputStream, metadata)
                     .withCannedAcl(CannedAccessControlList.PublicRead));
         } catch (IOException e) {
