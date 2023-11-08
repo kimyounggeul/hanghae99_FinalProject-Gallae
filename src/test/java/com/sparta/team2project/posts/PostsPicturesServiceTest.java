@@ -35,6 +35,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
+// 주의: PostsService에서는 실제 AWS S3를 활용하므로, 해당 테스트 코드는 직접적인 서비스 테스트코드가 아닌
+// LocalStack상에서 에뮬레이션된 S3를 활용하며, 서비스 코드내 구현된 Repository를 활용한 로직을 테스트하는 방식으로 구현되었습니다.
 @Testcontainers
 public class PostsPicturesServiceTest {
     private static final DockerImageName LOCALSTACK_IMAGE = DockerImageName.parse("localstack/localstack:latest");
