@@ -3,6 +3,7 @@ package com.sparta.team2project.pictures;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.S3Object;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.pictures.entity.Pictures;
@@ -32,8 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.sparta.team2project.schedules.entity.SchedulesCategory.카페;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
@@ -248,11 +248,64 @@ public class PicturesServiceTest {
         S3Object objectTwo = amazonS3.getObject(bucketName, keyTwo);
         System.out.println("파일을 가져왔습니다. 파일 이름=" + objectTwo.getKey());
         assertEquals(keyTwo, objectTwo.getKey());
+
     }
 
     @Test
-    void testDeletePictures(){
+    void testDeletePictures() {
+        // Mock data and behaviors
+        AmazonS3 amazonS3 = setUpS3();
+        Pictures pictures = MockPictures();
+        Schedules schedules = MockSchedules();
+        List<Pictures> picturesList = schedules.getPicturesList();
+        picturesList.add(pictures);
+
+        when(picturesRepository.findAllBySchedules(schedules)).thenReturn(schedules.getPicturesList());
+        when(picturesRepository.saveAll(picturesList)).thenReturn(picturesList);
+
+        List<Pictures> pictureSavedRepository = picturesRepository.saveAll(picturesList);
+
+        for(Pictures picture: pictureSavedRepository){
+            System.out.println("저장된 사진 이름: " + picture.getPicturesName());
+        }
+
+        // S3 사진 등록 기능 확인
+        String bucketName = "foo";
+        amazonS3.createBucket(bucketName);
+        System.out.println(bucketName +" 버킷 생성");
+
+        String key = pictureSavedRepository.get(0).getPicturesName();
+        String content = "테스트 사진1";
+        amazonS3.putObject(bucketName, key, content);
+        System.out.println("파일을 업로드하였습니다. 파일 이름=" + key +", 파일 내용=" + content);
+
+        S3Object object = amazonS3.getObject(bucketName, key);
+        System.out.println("파일을 가져왔습니다. 파일 이름=" + object.getKey());
+        assertEquals(key, object.getKey());
+
+        // S3 사진 삭제 기능 확인
+        // 사진 삭제 성공시 파일 삭제 메시지 출력, 아닐시 Exception 출력
+        Exception ex = null;
+        try{
+            amazonS3.deleteObject(bucketName, key);
+        } catch (AmazonS3Exception e){
+            ex = e;
+        }
+
+        assertNull(ex);
+        System.out.println("파일을 삭제하였습니다.");
+
+        // Repository에서 파일 정보 삭제
+
+        picturesList.clear();
+
+        picturesRepository.deleteAll(picturesList);
+
+        if( picturesRepository.findAllBySchedules(schedules).isEmpty()){
+            System.out.println("사진이 모두 삭제되었습니다. ");
+        }
+
+        assertTrue(picturesRepository.findAllBySchedules(schedules).isEmpty());
 
     }
-
 }
