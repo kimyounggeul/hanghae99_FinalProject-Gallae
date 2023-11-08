@@ -1,4 +1,4 @@
-package com.sparta.team2project.postspictures;
+package com.sparta.team2project.posts;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
