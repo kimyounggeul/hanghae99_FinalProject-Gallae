@@ -237,8 +237,6 @@ public class PicturesServiceTest {
         System.out.println("추출된 사진 URL: " + picturesTwoFromRepository.getPicturesURL());
 
         // S3 두 번째 사진 등록 기능 확인
-        amazonS3.createBucket(bucketName);
-        System.out.println(bucketName +" 버킷 생성");
 
         String keyTwo = picturesTwoFromRepository.getPicturesName();
         String contentTwo = "테스트 사진2";
