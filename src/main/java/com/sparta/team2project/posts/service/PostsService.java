@@ -226,7 +226,7 @@ public class PostsService {
             posts.like(); // 해당 게시물 좋아요수 증가시키는 메서드
 
             // 좋아요가 자신의 게시물에 작성된 것인지 확인
-            if (!posts.getUsers().getId().equals(existUser.getId())) {
+            if (!posts.getUsers().getEmail().equals(existUser.getEmail())) {
                 notifyService.send(posts.getUsers(), users, "새로운 좋아요가 있습니다");
             }
             return new LikeResponseDto("좋아요 확인", HttpServletResponse.SC_OK, true);
