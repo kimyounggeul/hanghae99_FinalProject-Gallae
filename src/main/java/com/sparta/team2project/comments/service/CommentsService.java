@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentsService {
@@ -48,8 +47,6 @@ public class CommentsService {
 
         // 댓글이 자신의 게시물에 작성된 것인지 확인
         if (!posts.getUsers().getEmail().equals(comments.getEmail())) {
-            log.info("posts.getUsers():{}", posts.getUsers().getId());
-            log.info("당신의 게시물에 새로운 댓글이 작성되었습니다");
             notifyService.send(posts.getUsers(), users, "새로운 댓글이 있습니다");
         }
 
