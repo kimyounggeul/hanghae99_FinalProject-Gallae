@@ -18,5 +18,7 @@ public interface CommentsRepository extends JpaRepository<Comments, Long> {
     Slice<Comments> findByPosts_IdOrderByCreatedAtDesc(Long postId, Pageable pageable);
 
     Slice<Comments> findAllByAndEmailOrderByCreatedAtDesc(String email, Pageable pageable);
+
+    List<Comments> findByEmail(String email);
 }
 
