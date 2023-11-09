@@ -8,7 +8,6 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.pictures.repository.PicturesRepository;
 import com.sparta.team2project.profile.dto.AboutMeRequestDto;
 import com.sparta.team2project.profile.dto.PasswordRequestDto;
 import com.sparta.team2project.profile.dto.ProfileNickNameRequestDto;
@@ -38,7 +37,6 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final ProfileRepository profileRepository;
     private final AmazonS3Client amazonS3Client;
-    private final PicturesRepository picturesRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -128,12 +126,6 @@ public class ProfileService {
             int originHeight = image.getHeight();
             System.out.println("originWidth: " + originWidth);
             System.out.println("originHeight: " + originHeight);
-//            if (originWidth > targetWidth) {
-//                targetHeight = targetWidth*(originHeight/originWidth);
-//            }
-//            else if (originHeight > targetHeight){
-//                targetWidth = targetHeight*(originWidth/originHeight);
-//            }
             // 이미지 품질 설정
 // Image.SCALE_DEFAULT : 기본 이미지 스케일링 알고리즘 사용
 // Image.SCALE_FAST : 이미지 부드러움보다 속도 우선

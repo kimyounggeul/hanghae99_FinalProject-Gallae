@@ -29,6 +29,12 @@ public enum ErrorCode {
     POST_NOT_SEARCH(HttpStatus.BAD_REQUEST, "검색결과가 없습니다."),
     COMMENTS_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 댓글은 존재하지 않습니다."),
     UNABLE_TO_CONVERT(HttpStatus.BAD_REQUEST,"파일 리사이즈에 실패했습니다."),
+    CATEGORY_NOT_VALID(HttpStatus.BAD_REQUEST, "세부일정 카테고리가 입력되지 않았습니다."),
+    PLACE_NAME_NOT_VALID(HttpStatus.BAD_REQUEST, "장소가 입력되지 않았습니다."),
+    CONTENT_NOT_VALID(HttpStatus.BAD_REQUEST, "내용이 입력되지 않았습니다."),
+    TIME_SPENT_NOT_VALID(HttpStatus.BAD_REQUEST, "소요시간이 입력되지 않았습니다."),
+    COORD_X_NOT_VALID(HttpStatus.BAD_REQUEST, "위도값이 입력되지 않았습니다."),
+    COORD_Y_NOT_VALID(HttpStatus.BAD_REQUEST, "경도값이 입력되지 않았습니다."),
 
     //ValidNumber(이메일 인증 관련)
     INVALID_VALID_TOKEN(HttpStatus.BAD_REQUEST, "이메일로 인증번호를 찾을 수 없습니다."),
