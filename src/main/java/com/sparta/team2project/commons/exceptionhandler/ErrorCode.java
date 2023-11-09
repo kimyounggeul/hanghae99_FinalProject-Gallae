@@ -48,6 +48,7 @@ public enum ErrorCode {
     RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다."),
 
     //notify(알림 관련)
+    RUN_TIME_ERROR(HttpStatus.BAD_REQUEST, "연결에 실패했습니다"),
     NOTIFY_NOT_EXIST(HttpStatus.BAD_REQUEST, "존재하지 않는 알림입니다.");
 
 

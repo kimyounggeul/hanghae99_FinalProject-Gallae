@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface NorifyRepository extends JpaRepository<Notify, Long> {
+public interface NotifyRepository extends JpaRepository<Notify, Long> {
 
-    List<Notify> findAllByAndEmailOrderByCreatedAtDesc(Users users);
+    List<Notify> findAllByReceiverOrderByCreatedAtDesc(Users users);
+
+    List<Notify> findByReceiver(Users users);
 }

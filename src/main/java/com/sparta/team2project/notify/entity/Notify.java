@@ -1,9 +1,10 @@
 package com.sparta.team2project.notify.entity;
 
 import com.sparta.team2project.commons.timestamped.TimeStamped;
-import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.users.Users;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
@@ -11,7 +12,9 @@ import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Notify extends TimeStamped {
 
     @Id
@@ -19,25 +22,19 @@ public class Notify extends TimeStamped {
     @Column(name = "notify_id")
     private Long id;
 
-    // 알림 내용 비어있지 않아야 하고 50자 이내
-    private String sender;
+    private String message;
 
-    private String contents;
-
-    private String email;
+    // 읽었는지 여부 확인
+    @Column(nullable = false)
+    private Boolean isRead;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "posts_id", nullable = false)
+    @JoinColumn(name = "receiver_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private Posts posts;
+    private Users receiver;
 
-    public Notify (String sender, String contents, Posts posts) {
-        this.sender = sender;
-        this.contents = contents;
-        this.posts = posts;
-    }
-
-    public Notify (Users users) {
-        this.email = users.getEmail();
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Users sender;
 }

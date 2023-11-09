@@ -99,7 +99,7 @@
 //
 //        // Then
 //        System.out.println("댓글 생성");
-//        assertEquals("댓글", response.getMsg());
+//        assertEquals("댓글을 작성하였습니다", response.getMsg());
 //        assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
 //    }
 //
