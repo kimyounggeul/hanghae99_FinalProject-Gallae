@@ -27,6 +27,7 @@ public enum ErrorCode {
     PASSWORD_NOT_MATCH(HttpStatus.BAD_REQUEST, "잘못된 패스워드입니다."),
     EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "등록되지 않은 이메일입니다."),
     POST_NOT_SEARCH(HttpStatus.BAD_REQUEST, "검색결과가 없습니다."),
+    CATEGORY_IS_BLANK(HttpStatus.BAD_REQUEST, "카테고리가 비어있습니다."),
     COMMENTS_NOT_FOUND(HttpStatus.NOT_FOUND,"해당 댓글은 존재하지 않습니다."),
     UNABLE_TO_CONVERT(HttpStatus.BAD_REQUEST,"파일 리사이즈에 실패했습니다."),
     CATEGORY_NOT_VALID(HttpStatus.BAD_REQUEST, "세부일정 카테고리가 입력되지 않았습니다."),
@@ -51,6 +52,7 @@ public enum ErrorCode {
     NOT_ALLOWED_TOKEN(HttpStatus.BAD_REQUEST, "지원하지 않는 토큰 형식입니다."),
     WRONG_TOKEN(HttpStatus.BAD_REQUEST, "잘못된 토큰입니다."),
     RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다.");
+
 
 
 

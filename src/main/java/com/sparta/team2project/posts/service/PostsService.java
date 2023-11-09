@@ -11,6 +11,7 @@ import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.posts.dto.PostsPicturesResponseDto;
 import com.sparta.team2project.posts.dto.PostsPicturesUploadResponseDto;
+import com.sparta.team2project.posts.entity.PostCategory;
 import com.sparta.team2project.posts.entity.PostsPictures;
 import com.sparta.team2project.posts.dto.*;
 import com.sparta.team2project.posts.entity.Posts;
@@ -70,9 +71,11 @@ public class PostsService {
 
         Users existUser = checkUser(users); // 사용자 조회
 
+        PostCategory postCategory = checkCategory(totalRequestDto.getPostCategory()); // 카테고리 null check
+
         Posts posts = new Posts(totalRequestDto.getContents(),
                 totalRequestDto.getTitle(),
-                totalRequestDto.getPostCategory(),
+                postCategory,
                 totalRequestDto.getSubTitle(),
                 existUser);
         postsRepository.save(posts);  //posts 저장
@@ -290,6 +293,16 @@ public class PostsService {
             throw new CustomException(ErrorCode.NOT_ALLOWED);
         }
     }
+
+    // 카테고리 null 체크
+    private PostCategory checkCategory(PostCategory postCategory) {
+        if (postCategory == null) {
+            throw new CustomException(ErrorCode.CATEGORY_IS_BLANK);
+        } else {
+            return postCategory;
+        }
+    }
+
 
     // 게시글 조회 메서드
     private Posts checkPosts(Long id) {
