@@ -183,7 +183,7 @@ public class PostsService {
 
     // 사용자가 좋아요 누른 게시물 조회
     @Transactional(readOnly = true)
-    public Page<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
+    public Slice<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Users existUser = checkUser(users); // 사용자 조회
@@ -196,7 +196,7 @@ public class PostsService {
         for (Posts posts : postsPage) {
             postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
         }
-        return new PageImpl<>(postResponseDtoList, pageable, postsPage.getTotalElements());
+        return new SliceImpl<>(postResponseDtoList, pageable, postsPage.hasNext());
     }
 
     // 사용자가 좋아요 누른 게시물 id만 조회
