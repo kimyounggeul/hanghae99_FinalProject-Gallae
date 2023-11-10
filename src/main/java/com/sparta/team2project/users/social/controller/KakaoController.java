@@ -31,14 +31,14 @@ public class KakaoController {
     private final KakaoService kakaoService;
 
     @Operation(summary = "카카오 회원가입입니다", description = "카카오 회원가입 api 입니다")
-//    @GetMapping("/kakao/callback")
-//    public String kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-//        // 리프레시 토큰을 받기 위해 tokenDto 생성
-//        return kakaoService.kakaoLogin(code,response);
-//    }
+    @GetMapping("/kakao/callback")
+    public String kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        // 리프레시 토큰을 받기 위해 tokenDto 생성
+        return kakaoService.kakaoLogin(code,response);
+    }
 // 카카오 아이디
-@GetMapping("/kakao/callback")
-public ResponseDto<KakaoUserInfoDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-    return kakaoService.kakaoLogin(code, response);
-}
+//@GetMapping("/kakao/callback")
+//public ResponseDto<KakaoUserInfoDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+//    return kakaoService.kakaoLogin(code, response);
+//}
 }
