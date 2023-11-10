@@ -203,9 +203,6 @@ public class PostsService {
         Users existUser = checkUser(users); // 사용자 조회
         List<Long> idList = postsRepository.findUsersLikePostsId(existUser);
 
-        if (idList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
         return idList;
     }
 
