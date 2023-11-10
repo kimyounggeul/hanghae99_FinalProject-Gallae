@@ -249,7 +249,6 @@ public ResponseDto<KakaoUserInfoDto> kakaoLogin(String code, HttpServletResponse
     }
 
     // 3. 필요시에 회원가입
-    @Transactional
     public Users registerKakaoUserIfNeeded(KakaoUserInfoDto kakaoUserInfo) {
         // DB 에 중복된 Kakao Id 가 있는지 확인
         Long kakaoId = kakaoUserInfo.getId();
@@ -285,6 +284,7 @@ public ResponseDto<KakaoUserInfoDto> kakaoLogin(String code, HttpServletResponse
                 kakaoUser = new Users(email, password, nickname, kakaoId);
             }
             userRepository.save(kakaoUser);
+            log.info(" " + kakaoUser);
         }
         return kakaoUser;
     }
