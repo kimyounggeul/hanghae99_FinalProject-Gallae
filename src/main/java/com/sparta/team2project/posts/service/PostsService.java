@@ -189,9 +189,6 @@ public class PostsService {
         Users existUser = checkUser(users); // 사용자 조회
         Page<Posts> postsPage = postsRepository.findUsersLikePosts(existUser, pageable);
 
-        if (postsPage.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
         for (Posts posts : postsPage) {
             postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
