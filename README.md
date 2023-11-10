@@ -235,6 +235,6 @@ clean.doLast {
 
 
 ### 프로젝트 상세정보:
-- 배포된 웹 사이트: https://gallae-trip.com
+- 배포된 웹 사이트: [https://gallae-trip.com](https://gallae-fe.vercel.app/)
 - 프로젝트 기획 문서(노션): https://wind-song-8bf.notion.site/2-2571118e6ef94d2082bc372fca7260d8
 
