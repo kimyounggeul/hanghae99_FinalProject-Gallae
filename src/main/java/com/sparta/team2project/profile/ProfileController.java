@@ -80,7 +80,7 @@ public class ProfileController {
 
     // 다른 사용자 마이페이지 조회하기(닉네임 별로...)
     @Operation(summary = "타사용자 마이페이지 조회하기", description = "타 사용자 마이페이지 조회 api 입니다.")
-    @GetMapping("/{nickName}")
+    @GetMapping("/nickName")
     public ResponseEntity<ProfileResponseDto> getOtherUsersProfile(@RequestBody OtherUsersProfileRequestDto requestDto,
                                                                    @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return profileService.getOtherUsersProfile(requestDto, userDetails.getUsers());
