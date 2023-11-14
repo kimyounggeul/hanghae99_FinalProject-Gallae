@@ -305,9 +305,7 @@ public class PostsService {
 
     // 상위 랭킹 및 검색 조회한 게시글 관련 반환 시 사용 메서드
     private List<PostResponseDto> getPostResponseDto(List<Posts> postsList) {
-        if (postsList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
+       
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
         for (Posts posts : postsList) {
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드
