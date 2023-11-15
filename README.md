@@ -7,10 +7,10 @@
 > 프론트엔드에 대한 설명은 다음 링크를 참조: https://github.com/hyj01230/gallae_fe
 
 백엔드: 
-* 장지예(프로젝트 리더): 로그인/회원가입, 소셜로그인, 이메일 인증 기능(Redis)
-* 김정환(프로젝트 총무): 게시글 CRUD, 검색, 좋아요 랭킹 정렬, Swagger UI
-* 김용글(프로젝트 서기): 댓글/대댓글 CRUD, CI/CD
-* 문승태(프로젝트 발표): 날짜별 계획 및 세부일정 CRUD, 사진 관련 기능
+* 장지예(프로젝트 리더): 로그인/회원가입, 소셜로그인, 이메일 인증 기능
+* 김정환(프로젝트 멤버/총무): 게시글 CRUD, 검색, 좋아요 랭킹 정렬, Swagger UI
+* 김용글(프로젝트 멤버): 댓글/대댓글 CRUD, CI/CD
+* 문승태(프로젝트 멤버): 날짜별 계획 및 세부일정 CRUD, 사진 관련 기능
 
 ## 프로젝트 간략 설명
 2-30대의 여행 계획자들을 위한 여행 계획 세우기 및 공유 서비스
@@ -18,7 +18,8 @@
 ### 적용 기술
 
 - 아키텍쳐
-![project_architecture](https://github.com/Jang-JIye/Team2_Final/assets/53979008/b4c80832-f4bb-45c9-b423-9940d5c83a73)
+![Blank diagram (3)](https://github.com/Jang-JIye/Team2_Final/assets/53979008/29403cb8-611b-4646-bbbf-8ddd46cadb8f)
+
 
 - 프론트엔드: React, Tailwind, Recoil, React Router, Vercel, Axios, React Query
 - 백엔드: Java Spring Boot, JPA, QueryDSL, Gradle
@@ -27,8 +28,8 @@
 - 캐시: Redis
 - 데이터베이스: MySQL(AWS RDS), AWS S3
 - 인증/인가: JWT, Spring Security, OAuth
-- 테스트: JUnit5, Mockito
-- 배포(CI/CD): Github Actions
+- 테스트: JUnit5, Mockito, TestContainers, LocalStack
+- 배포(CI/CD): Github Actions, AWS CodeDeploy
 
 ### ERD
 ![final_erd](https://github.com/Jang-JIye/Team2_Final/assets/53979008/37895b8a-2fe0-4da7-945b-17d419e6071b)
