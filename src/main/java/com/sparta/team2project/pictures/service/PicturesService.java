@@ -11,9 +11,7 @@ import com.sparta.team2project.pictures.dto.PicturesResponseDto;
 import com.sparta.team2project.pictures.dto.UploadResponseDto;
 import com.sparta.team2project.pictures.entity.Pictures;
 import com.sparta.team2project.pictures.repository.PicturesRepository;
-import com.sparta.team2project.s3.AmazonS3ResourceStorage;
 import com.sparta.team2project.s3.CustomMultipartFile;
-import com.sparta.team2project.s3.FileDetail;
 import com.sparta.team2project.schedules.entity.Schedules;
 import com.sparta.team2project.schedules.repository.SchedulesRepository;
 import com.sparta.team2project.users.UserRepository;
@@ -36,7 +34,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PicturesService {
-    private final AmazonS3ResourceStorage amazonS3ResourceStorage;
     private final AmazonS3Client amazonS3Client;
     private final PicturesRepository picturesRepository;
     private final SchedulesRepository schedulesRepository;
@@ -45,11 +42,13 @@ public class PicturesService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    public FileDetail save(MultipartFile multipartFile) {
-        FileDetail fileDetail = FileDetail.multipartOf(multipartFile);
-        amazonS3ResourceStorage.store(fileDetail.getPath(), multipartFile);
-        return fileDetail;
-    }
+//    public FileDetail save(MultipartFile multipartFile) {
+//        FileDetail fileDetail = FileDetail.multipartOf(multipartFile);
+//        amazonS3ResourceStorage.store(fileDetail.getPath(), multipartFile);
+//        return fileDetail;
+//    }
+
+
 
     // 사진 등록
     @SneakyThrows

@@ -26,7 +26,7 @@ public class Users {
     @Column(nullable = false)
     private String nickName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Enumerated(value = EnumType.STRING)
     private UserRoleEnum userRole;
 
@@ -51,12 +51,20 @@ public class Users {
     }
 
 
-    public Users(String email, String password, String nickName, UserRoleEnum userRole, Long kakaoId) {
+    public Users(String email, String password, String nickName,  Long kakaoId) {
+        this.email = email;
+        this.password = password;
+        this.nickName = nickName;
+//        this.userRole = userRole;
+        this.kakaoId = kakaoId;
+    }
+
+    public Users(String email, String password, String nickName, UserRoleEnum userRole) {
         this.email = email;
         this.password = password;
         this.nickName = nickName;
         this.userRole = userRole;
-        this.kakaoId =kakaoId;
+//        this.kakaoId = kakaoId;
     }
 
 

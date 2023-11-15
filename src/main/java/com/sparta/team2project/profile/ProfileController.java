@@ -2,10 +2,7 @@ package com.sparta.team2project.profile;
 
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
-import com.sparta.team2project.profile.dto.AboutMeRequestDto;
-import com.sparta.team2project.profile.dto.PasswordRequestDto;
-import com.sparta.team2project.profile.dto.ProfileNickNameRequestDto;
-import com.sparta.team2project.profile.dto.ProfileResponseDto;
+import com.sparta.team2project.profile.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -51,6 +48,14 @@ public class ProfileController {
         }
     }
 
+    // 프로필 수정하기(기본 이미지)
+    @Operation(summary = "마이 페이지 프로필 수정(프로필사진, 기본이미지)", description = "마이 페이지 (프로필사진, 기본이미지)프로필 수정 api 입니다.")
+    @PutMapping("/default-profileImg")
+    public String defaultProfileImg(
+                                   @AuthenticationPrincipal UserDetailsImpl userDetails) {
+            return profileService.defaultProfileImg(userDetails.getUsers());
+    }
+
     // 프로필 사진 조회
     @Operation(summary = "마이 페이지 프로필 사진 조회", description = "마이 페이지 프로필 사진 조회 api 입니다.")
     @GetMapping("/users-profileImg/{userId}")
@@ -71,5 +76,13 @@ public class ProfileController {
     public ResponseEntity<MessageResponseDto> updateAboutMe(@Valid @RequestBody AboutMeRequestDto requestDto,
                                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return profileService.updateAboutMe(requestDto, userDetails.getUsers());
+    }
+
+    // 다른 사용자 마이페이지 조회하기(닉네임 별로...)
+    @Operation(summary = "타사용자 마이페이지 조회하기", description = "타 사용자 마이페이지 조회 api 입니다.")
+    @GetMapping("/nickName")
+    public ResponseEntity<ProfileResponseDto> getOtherUsersProfile(@RequestBody OtherUsersProfileRequestDto requestDto,
+                                                                   @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return profileService.getOtherUsersProfile(requestDto, userDetails.getUsers());
     }
 }

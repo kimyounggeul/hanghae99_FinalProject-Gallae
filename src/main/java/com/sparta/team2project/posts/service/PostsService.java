@@ -11,6 +11,7 @@ import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.posts.dto.PostsPicturesResponseDto;
 import com.sparta.team2project.posts.dto.PostsPicturesUploadResponseDto;
+import com.sparta.team2project.posts.entity.PostCategory;
 import com.sparta.team2project.posts.entity.PostsPictures;
 import com.sparta.team2project.posts.dto.*;
 import com.sparta.team2project.posts.entity.Posts;
@@ -66,13 +67,15 @@ public class PostsService {
     private String bucket;
 
     // 게시글 생성
-    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto, Users users) {
+    public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto,Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
 
+        PostCategory postCategory = checkCategory(totalRequestDto.getPostCategory()); // 카테고리 null check
+
         Posts posts = new Posts(totalRequestDto.getContents(),
                 totalRequestDto.getTitle(),
-                totalRequestDto.getPostCategory(),
+                postCategory,
                 totalRequestDto.getSubTitle(),
                 existUser);
         postsRepository.save(posts);  //posts 저장
@@ -82,14 +85,17 @@ public class PostsService {
                 .map(tag -> new Tags(tag, posts))
                 .forEach(tagsRepository::save); // tags 저장
 
+
         List<Long> idList = new ArrayList<>();// tripDateID 담는 리스트
         List<TripDateOnlyRequestDto> tripDateRequestDtoList = totalRequestDto.getTripDateList();
-        for (TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList) {
-            TripDate tripDate = new TripDate(tripDateRequestDto, posts);
-            tripDateRepository.save(tripDate); // tripDate 저장
-            idList.add(tripDate.getId());
-        }
-        return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK, posts, idList);
+        if(totalRequestDto.getTripDateList() != null && !totalRequestDto.getTripDateList().isEmpty()){
+            for(TripDateOnlyRequestDto tripDateRequestDto : tripDateRequestDtoList){
+                TripDate tripDate = new TripDate(tripDateRequestDto,posts);
+                tripDateRepository.save(tripDate); // tripDate 저장
+                idList.add(tripDate.getId());
+            }
+            return new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK,posts,idList);
+        } else {return  new PostMessageResponseDto("게시글이 등록 되었습니다.", HttpServletResponse.SC_OK,posts);}
     }
 
     // 단일 게시물 조회
@@ -106,6 +112,7 @@ public class PostsService {
     }
 
     // 게시글 전체 조회
+    @Transactional(readOnly = true)
     public Slice<PostResponseDto> getAllPosts(int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
@@ -121,6 +128,7 @@ public class PostsService {
     }
 
     // 사용자별 게시글 전체 조회
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getUserPosts(Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
@@ -141,6 +149,7 @@ public class PostsService {
     }
 
     // 키워드 검색
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getKeywordPosts(String keyword) {
 
         if (keyword == null || keyword.isEmpty()) { // 키워드가 null값인 경우
@@ -164,6 +173,7 @@ public class PostsService {
     }
 
     // 랭킹 목록 조회(상위 10개)
+    @Transactional(readOnly = true)
     public List<PostResponseDto> getRankPosts() {
 
         // 상위 10개 게시물 가져오기 (좋아요 수 겹칠 시 createdAt 내림차순으로 정렬)
@@ -172,31 +182,27 @@ public class PostsService {
     }
 
     // 사용자가 좋아요 누른 게시물 조회
-    public Page<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
+    @Transactional(readOnly = true)
+    public Slice<PostResponseDto> getUserLikePosts(Users users, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Users existUser = checkUser(users); // 사용자 조회
         Page<Posts> postsPage = postsRepository.findUsersLikePosts(existUser, pageable);
 
-        if (postsPage.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
         for (Posts posts : postsPage) {
             postResponseDtoList.add(new PostResponseDto(posts, posts.getUsers()));
         }
-        return new PageImpl<>(postResponseDtoList, pageable, postsPage.getTotalElements());
+        return new SliceImpl<>(postResponseDtoList, pageable, postsPage.hasNext());
     }
 
     // 사용자가 좋아요 누른 게시물 id만 조회
+    @Transactional(readOnly = true)
     public List<Long> getUserLikePostsId(Users users) {
 
         Users existUser = checkUser(users); // 사용자 조회
         List<Long> idList = postsRepository.findUsersLikePostsId(existUser);
 
-        if (idList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
         return idList;
     }
 
@@ -282,6 +288,16 @@ public class PostsService {
         }
     }
 
+    // 카테고리 null 체크
+    private PostCategory checkCategory(PostCategory postCategory) {
+        if (postCategory == null) {
+            throw new CustomException(ErrorCode.CATEGORY_IS_BLANK);
+        } else {
+            return postCategory;
+        }
+    }
+
+
     // 게시글 조회 메서드
     private Posts checkPosts(Long id) {
         return postsRepository.findById(id).orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_EXIST));
@@ -289,9 +305,7 @@ public class PostsService {
 
     // 상위 랭킹 및 검색 조회한 게시글 관련 반환 시 사용 메서드
     private List<PostResponseDto> getPostResponseDto(List<Posts> postsList) {
-        if (postsList.isEmpty()) {
-            throw new CustomException(ErrorCode.POST_NOT_EXIST);
-        }
+       
         List<PostResponseDto> postResponseDtoList = new ArrayList<>();
         for (Posts posts : postsList) {
             int commentNum = commentsRepository.countByPosts(posts); // 댓글 세는 메서드

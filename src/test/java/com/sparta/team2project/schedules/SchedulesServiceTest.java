@@ -123,22 +123,28 @@ public class SchedulesServiceTest {
         System.out.println("tripDateReturn.getChosenDate(): " + tripDateReturn.getChosenDate());
         assertEquals(tripDate.getChosenDate(), tripDateReturn.getChosenDate());
 
+        System.out.println(" ".repeat(50));
+
+
         System.out.println("Check email");
         System.out.println("users.getEmail(): " + users.getEmail());
         System.out.println("usersReturn.getEmail(): " + usersReturn.getEmail());
         assertEquals(users.getEmail(), usersReturn.getEmail());
 
-        // Call the method you want to test
-        MessageResponseDto response = schedulesService.createSchedules(
-                tripDateId,
-                createSchedulesRequestDto,
-                users
-        );
+        System.out.println(" ".repeat(50));
 
+
+        List<SchedulesResponseDto> schedulesResponseDtoList = schedulesService.createSchedules(tripDateId, createSchedulesRequestDto, users);
+
+        System.out.println("생성한 schedule의 아이디 값: " + schedulesResponseDtoList.get(0).getSchedulesId());
+
+        System.out.println(" ".repeat(50));
 
         // Verify the result and expectations
-        assertEquals("일정이 등록 되었습니다.", response.getMsg());
-        assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
+        System.out.println("schedulesRequestDto.getContents(): " + schedulesRequestDto.getContents());
+        System.out.println("schedulesResponseDtoList.get(0).getContents(): " + schedulesResponseDtoList.get(0).getContents());;
+        assertEquals(schedulesRequestDto.getContents(), schedulesResponseDtoList.get(0).getContents());
+
 
     }
 
