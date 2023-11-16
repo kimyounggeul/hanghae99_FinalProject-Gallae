@@ -38,7 +38,7 @@
 - 데이터베이스: MySQL(AWS RDS), AWS S3
 - 인증/인가: JWT, Spring Security, OAuth
 - 테스트: JUnit5, Mockito, TestContainers, LocalStack
-- 배포(CI/CD): Github Actions, AWS CodeDeploy
+- 배포(CI/CD): Github Actions, AWS CodeDeploy, AWS S3
 
 ### 기술 선정 이유(백엔드)
 1. 백엔드 언어 및 프레임워크: Java ver 17 & Spring Boot ver 3
@@ -93,12 +93,13 @@
 > - 간편성(JUnit5): 단위 테스트를 작성하여 프로그램의 각 부분이 정확히 동작하는지 검증할 필요가 있었고, 이를 위해 간편하게 테스트 코드 구현이 가능한 JUnit5를 선택했다.
 > - 간편성(TestContainers + LocalStack): Docker상에 존재하는 컨테이너(Container)라는 개념을 활용하여 테스트를 할 수 있게 해주는 TestContainers를 활용해 오직 테스트만을 위한 환경을 쉽게 구성 가능했고, AWS의 서비스(RDS, S3등)을 모사하여 에뮬레이션 해 주는 이미지의 개념인 LocalStack를 활용할 수 있었다. 때문에 실제 S3를 활용하여 구현된 코드를 건드리지 않고 완전히 독립된 환경에서 오직 사진 업로드 기능 테스트를 위한 S3 에뮬레이션 환경을 구성할 수 있다는 장점 때문에 선택했다.
 
-10. CI/CD: GitHub Actions, AWS CodeDeploy
+10. CI/CD: GitHub Actions, AWS CodeDeploy, AWS S3
 - 선정 이유:
 > - 간편성(GitHub Actions): 이미 작업중인 GitHub Repository에서 바로 어플리케이션을 배포할 수 있다는 점이 빠르게 CI/CD를 적용해 볼 수 있다는 점에서 매력적이었다. 또한 간단하고 직관적인 인터페이스 때문에 사용이 편리했고, CI/CD를 적용하는데 매우 수월할 것이라고 판단했다.
 > - 경제성(GitHub Actions): 대규모 프로젝트를 진행하는 것이 아니기에 Jenkins등 다른 솔루션은 리소스의 낭비가 크다고 판단했고, 따라서 GitHub Actions가 진행하는 프로젝트의 규모에 적절하다고 판단되었다.
 > - 유지보수 용이성(CodeDeploy): 빌드 과정이 투명하여 오류를 쉽게 확인 가능하다.
 > - 호환성(CodeDeploy): 프로젝트에서 AWS의 여러 서비스인 EC2, S3, RDS를 활용하기로 결정했기에 통합하여 같이 활용하는데 적합하다고 판단했다.
+> - 간편성(S3): 파일을 쉽게 업로드할 수 있게 해주는 S3를 활용해 jar파일을 zip으로 업로드하고 이를 CodeDeploy에 배포할 수 있게 줄 수 있는 도구로 판단되었다. CodeDeploy가 배포에 필요한 파일을 저장할 수 있는 도구로써 좋겠다고 판단되어 선택했다. 
 
 ### ERD
 ![final_erd](https://github.com/Jang-JIye/Team2_Final/assets/53979008/37895b8a-2fe0-4da7-945b-17d419e6071b)
