@@ -53,8 +53,13 @@ public enum ErrorCode {
     WRONG_TOKEN(HttpStatus.BAD_REQUEST, "잘못된 토큰입니다."),
     RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다."),
     NOT_EXIST_NICKNAME(HttpStatus.BAD_REQUEST, "이 회원은 존재하지 않습니다."),
-    NULL_NICKNAME(HttpStatus.BAD_REQUEST, "닉네임을 확인하지 못하였습니다. 보내는 값을 확인해주세요.");
+    NULL_NICKNAME(HttpStatus.BAD_REQUEST, "닉네임을 확인하지 못하였습니다. 보내는 값을 확인해주세요."),
 
+    RANDOM_NICKNAME_FAIL(HttpStatus.BAD_REQUEST, "닉네임 생성에 실패하였습니다."),
+
+    //notify(알림 관련)
+    RUN_TIME_ERROR(HttpStatus.BAD_REQUEST, "연결에 실패했습니다"),
+    NOTIFY_NOT_EXIST(HttpStatus.BAD_REQUEST, "존재하지 않는 알림입니다.");
 
 
 

@@ -6,6 +6,7 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.replies.dto.RepliesMeResponseDto;
@@ -28,8 +29,7 @@ import java.util.List;
 public class RepliesService {
     private final RepliesRepository repliesRepository;
     private final CommentsRepository commentsRepository;
-
-
+    private final NotifyService notifyService;
 
     // 대댓글 생성
     public MessageResponseDto repliesCreate(Long commentId,
@@ -41,6 +41,11 @@ public class RepliesService {
 
         Replies replies = new Replies(requestDto, users, comments);
         repliesRepository.save(replies);
+
+        // 댓글이 자신의 게시물에 작성된 것인지 확인
+        if (!comments.getPosts().getUsers().getEmail().equals(replies.getEmail())) {
+            notifyService.send(comments.getPosts().getUsers(), users, "새로운 대댓글이 있습니다");
+        }
 
         return new MessageResponseDto ("대댓글을 작성하였습니다", 200);
     }

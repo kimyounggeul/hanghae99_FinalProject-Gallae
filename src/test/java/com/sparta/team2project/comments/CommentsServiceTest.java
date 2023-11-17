@@ -10,6 +10,7 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.entity.PostCategory;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
@@ -33,14 +34,16 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class CommentsServiceTest {
 
     // @Mock 이 붙은 목 객체를 주입시킬 수 있다
     @InjectMocks
     private CommentsService commentsService;
+
+    @InjectMocks
+    private NotifyService notifyService;
 
     // 로직이 삭제된 빈껍데기, 실제로 메서드는 가지고 있지만 내부구현이 없음
     @Mock
@@ -89,7 +92,7 @@ public class CommentsServiceTest {
         Long postId = 1L;
         CommentsRequestDto requestDto = MockCommentsRequestDto();
         Users users = MockUsers1(); // 사용자 정보 초기화
-        Posts post = new Posts(); // 게시글 정보 초기화
+        Posts post = MockPosts(); // 게시글 정보 초기화
 
         when(postsRepository.findById(postId)).thenReturn(Optional.of(post));
         when(commentsRepository.save(any(Comments.class))).thenReturn(new Comments());
@@ -99,7 +102,7 @@ public class CommentsServiceTest {
 
         // Then
         System.out.println("댓글 생성");
-        assertEquals("댓글", response.getMsg());
+        assertEquals("댓글을 작성하였습니다", response.getMsg());
         assertEquals(HttpServletResponse.SC_OK, response.getStatusCode());
     }
 

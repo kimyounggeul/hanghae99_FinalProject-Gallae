@@ -9,14 +9,15 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.replies.dto.RepliesResponseDto;
 import com.sparta.team2project.replies.entity.Replies;
-import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -30,6 +31,7 @@ import java.util.List;
 public class CommentsService {
     private final CommentsRepository commentsRepository;
     private final PostsRepository postsRepository;
+    private final NotifyService notifyService;
 
     // 댓글 생성
     public MessageResponseDto commentsCreate(Long postId,
@@ -40,9 +42,15 @@ public class CommentsService {
                 () -> new CustomException(ErrorCode.POST_NOT_EXIST)); // 존재하지 않는 게시글입니다
 
         Comments comments = new Comments(requestDto, users, posts);
+
         commentsRepository.save(comments);
 
-        return new MessageResponseDto ("댓글", 200);
+        // 댓글이 자신의 게시물에 작성된 것인지 확인
+        if (!posts.getUsers().getEmail().equals(comments.getEmail())) {
+            notifyService.send(posts.getUsers(), users, "새로운 댓글이 있습니다");
+        }
+
+        return new MessageResponseDto ("댓글을 작성하였습니다", 200);
     }
 
     // 댓글 조회

@@ -6,6 +6,7 @@ import com.sparta.team2project.comments.dto.CommentsResponseDto;
 import com.sparta.team2project.comments.service.CommentsService;
 import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.security.UserDetailsImpl;
+import com.sparta.team2project.notify.service.NotifyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class CommentsController {
     public ResponseEntity<MessageResponseDto> commentsCreate(@PathVariable("postId") Long postId,
                                                               @RequestBody CommentsRequestDto requestDto,
                                                               @AuthenticationPrincipal UserDetailsImpl userDetails) {
+
         return ResponseEntity.ok(commentsService.commentsCreate(postId, requestDto, userDetails.getUsers()));
     }
 

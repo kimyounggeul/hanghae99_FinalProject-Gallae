@@ -9,6 +9,7 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.dto.PostsPicturesResponseDto;
 import com.sparta.team2project.posts.dto.PostsPicturesUploadResponseDto;
 import com.sparta.team2project.posts.entity.PostCategory;
@@ -65,6 +66,8 @@ public class PostsService {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
+
+    private final NotifyService notifyService;
 
     // 게시글 생성
     public PostMessageResponseDto createPost(TotalRequestDto totalRequestDto,Users users) {
@@ -221,6 +224,11 @@ public class PostsService {
             PostsLike postsLike = new PostsLike(posts, existUser);
             postsLikeRepository.save(postsLike); // 좋아요 저장
             posts.like(); // 해당 게시물 좋아요수 증가시키는 메서드
+
+            // 좋아요가 자신의 게시물에 작성된 것인지 확인
+            if (!posts.getUsers().getEmail().equals(existUser.getEmail())) {
+                notifyService.send(posts.getUsers(), users, "새로운 좋아요가 있습니다");
+            }
             return new LikeResponseDto("좋아요 확인", HttpServletResponse.SC_OK, true);
         }
     }

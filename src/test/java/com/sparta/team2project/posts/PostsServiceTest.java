@@ -6,6 +6,7 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
+import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.dto.*;
 import com.sparta.team2project.posts.entity.PostCategory;
 import com.sparta.team2project.posts.entity.Posts;
@@ -20,7 +21,6 @@ import com.sparta.team2project.tags.repository.TagsRepository;
 import com.sparta.team2project.tripdate.repository.TripDateRepository;
 import com.sparta.team2project.users.UserRepository;
 import com.sparta.team2project.users.Users;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,6 @@ import org.springframework.data.domain.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -69,12 +68,14 @@ public class PostsServiceTest {
 
     private PostsService postsService;
 
+    @Mock
+    private NotifyService notifyService;
 
 
     @BeforeEach
     public void setup() {
 
-        postsService = new PostsService(postsRepository,tripDateRepository,postsLikeRepository,userRepository,commentsRepository,tagsRepository,amazonS3ResourceStorage,amazonS3Client,postsPicturesRepository);
+        postsService = new PostsService(postsRepository, tripDateRepository, postsLikeRepository, userRepository, commentsRepository, tagsRepository, amazonS3ResourceStorage, amazonS3Client, postsPicturesRepository, notifyService);
     }
 
 
