@@ -6,11 +6,12 @@
 * 허원(프론트엔드 멤버)
 > 프론트엔드에 대한 설명은 다음 링크를 참조: https://github.com/hyj01230/gallae_fe
 
-백엔드: 
-* 장지예(프로젝트 리더): 로그인/회원가입, 소셜로그인, 이메일 인증 기능
-* 김정환(프로젝트 멤버/총무): 게시글 CRUD, 검색, 좋아요 랭킹 정렬, Swagger UI
-* 김용글(프로젝트 멤버): 댓글/대댓글 CRUD, CI/CD
-* 문승태(프로젝트 멤버): 날짜별 계획 및 세부일정 CRUD, 사진 관련 기능
+백엔드(공통 관여: `commons`):  
+* 장지예(프로젝트 리더): 로그인/회원가입, 소셜로그인, 이메일 인증 기능 ( `users`, `profile`, `redis`, `email`, `refreshToken`)
+* 김정환(프로젝트 멤버/총무): 게시글 CRUD, 검색, 좋아요 랭킹 정렬, Swagger UI ( `posts`, `postslike`, `tags`)
+* 김용글(프로젝트 멤버): 댓글/대댓글 CRUD 및 Controller, Service 테스트코드, 서버관리, 알림(프로젝트 미반영),
+CI/CD ( `comments`, `replies`, `notify`)
+* 문승태(프로젝트 멤버): 날짜별 계획 및 세부일정 CRUD, 사진 관련 기능 ( `schedules`, `pictures`, `postspictures`, `tripDate`)
 
 ## 프로젝트 간략 설명
 <aside>
@@ -308,4 +309,3 @@ clean.doLast {
 ### 프로젝트 상세정보:
 - 배포된 웹 사이트: [https://gallae-trip.com](https://gallae-fe.vercel.app/)
 - 프로젝트 기획 문서(노션): https://wind-song-8bf.notion.site/2-2571118e6ef94d2082bc372fca7260d8
-
