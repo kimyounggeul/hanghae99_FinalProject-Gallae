@@ -1,5 +1,10 @@
 # Team2 최종 프로젝트 "갈래"
 
+### 프로젝트 상세정보:
+- 배포된 웹 사이트: [https://gallae-trip.com](https://gallae-fe.vercel.app/)
+- 프로젝트 기획 문서(노션): https://wind-song-8bf.notion.site/2-2571118e6ef94d2082bc372fca7260d8
+- 시연영상: https://www.youtube.com/watch?v=IEU5xqMW1Tw&list=PLMx-RHvoLaM_rRrCM-3Vj-XB3wvp-Z-SS&index=3
+  
 프론트엔드:
 * 홍미경(프론트엔드 리더)
 * 전하영(프론트엔드 멤버)
@@ -304,8 +309,3 @@ clean.doLast {
 	file(querydslDir).deleteDir()
 }
 ```
-
-
-### 프로젝트 상세정보:
-- 배포된 웹 사이트: [https://gallae-trip.com](https://gallae-fe.vercel.app/)
-- 프로젝트 기획 문서(노션): https://wind-song-8bf.notion.site/2-2571118e6ef94d2082bc372fca7260d8
