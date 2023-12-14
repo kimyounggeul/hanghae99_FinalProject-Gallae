@@ -7,18 +7,17 @@ import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
 import com.sparta.team2project.notify.service.NotifyService;
-import com.sparta.team2project.posts.entity.Posts;
-import com.sparta.team2project.posts.repository.PostsRepository;
 import com.sparta.team2project.replies.dto.RepliesMeResponseDto;
 import com.sparta.team2project.replies.dto.RepliesRequestDto;
-import com.sparta.team2project.replies.dto.RepliesResponseDto;
 import com.sparta.team2project.replies.entity.Replies;
 import com.sparta.team2project.replies.repository.RepliesRepository;
 import com.sparta.team2project.users.Users;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,22 +95,23 @@ public class RepliesService {
         return new SliceImpl<>(RepliesMeResponseDtoList, pageable, repliesMeList.hasNext());
     }
 
-    @Transactional
     // 대댓글 수정
+    @Transactional
     public MessageResponseDto repliesUpdate( Long repliesId,
                                              RepliesRequestDto request,
                                              Users users) {
 
         Replies replies = findById(repliesId);
+        checkAuthority(users,replies);
+        replies.update(request, users);
+
+        String message;
         if (users.getUserRole() == UserRoleEnum.ADMIN) {
-            replies.update(request, users);
-            return new MessageResponseDto("관리자가 대댓글을 수정하였습니다", 200);
-        } else if (users.getEmail().equals(replies.getEmail())) {
-                replies.update(request, users);
-                return new MessageResponseDto("대댓글을 수정하였습니다", 200);
-            } else {
-                throw new CustomException(ErrorCode.NOT_ALLOWED); // 권한이 없습니다
+            message = "관리자가 대댓글을 수정하였습니다" ;
+        } else {
+            message = "대댓글을 수정하였습니다";
         }
+        return new MessageResponseDto(message, 200);
     }
 
     // 대댓글 삭제
@@ -119,19 +119,27 @@ public class RepliesService {
                                             Users users) {
 
         Replies replies = findById(repliesId);
+        checkAuthority(users,replies);
+        repliesRepository.delete(replies);
+
+        String message;
         if (users.getUserRole() == UserRoleEnum.ADMIN) {
-            repliesRepository.delete(replies);
-            return new MessageResponseDto("관리자가 대댓글을 삭제하였습니다", 200);
-        } else if (users.getEmail().equals(replies.getEmail())) {
-                repliesRepository.delete(replies);
-                return new MessageResponseDto("대댓글을 삭제하였습니다", 200);
-            } else {
-                throw new CustomException(ErrorCode.NOT_ALLOWED); // 권한이 없습니다
+            message = "관리자가 대댓글을 삭제하였습니다" ;
+        } else {
+            message = "대댓글을 삭제하였습니다";
         }
+        return new MessageResponseDto(message, 200);
     }
+
 
     private Replies findById(Long id) {
         return repliesRepository.findById(id).orElseThrow(
                 () -> new CustomException(ErrorCode.REPLIES_NOT_EXIST)); // 존재하지 않는 대댓글입니다
+    }
+
+    public void checkAuthority (Users existUsers, Replies replies) {
+        if (!existUsers.getUserRole().equals(UserRoleEnum.ADMIN) && !existUsers.getEmail().equals(replies.getEmail())){
+            throw new CustomException(ErrorCode.NOT_ALLOWED); // 권한이 없습니다
+        }
     }
 }

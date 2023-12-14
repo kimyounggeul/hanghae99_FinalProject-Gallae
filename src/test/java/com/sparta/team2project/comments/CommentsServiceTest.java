@@ -10,7 +10,6 @@ import com.sparta.team2project.commons.dto.MessageResponseDto;
 import com.sparta.team2project.commons.entity.UserRoleEnum;
 import com.sparta.team2project.commons.exceptionhandler.CustomException;
 import com.sparta.team2project.commons.exceptionhandler.ErrorCode;
-import com.sparta.team2project.notify.service.NotifyService;
 import com.sparta.team2project.posts.entity.PostCategory;
 import com.sparta.team2project.posts.entity.Posts;
 import com.sparta.team2project.posts.repository.PostsRepository;
@@ -28,22 +27,19 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class CommentsServiceTest {
 
     // @Mock 이 붙은 목 객체를 주입시킬 수 있다
     @InjectMocks
     private CommentsService commentsService;
-
-    @InjectMocks
-    private NotifyService notifyService;
 
     // 로직이 삭제된 빈껍데기, 실제로 메서드는 가지고 있지만 내부구현이 없음
     @Mock
